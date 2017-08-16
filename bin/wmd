@@ -1,0 +1,447 @@
+#!/bin/env python
+#
+#
+
+
+import MAUS
+
+import os
+import sys
+import copy
+import shutil
+
+import json
+import argparse
+
+
+QUIET = False
+DEFAULT_DATA_FILE = "/vols/mice/ch308/analysis_runs_database.json"
+
+####################################################################################################
+
+DATA_FILE = DEFAULT_DATA_FILE
+DATA_FILE_WRITE = copy.copy(DATA_FILE)
+
+
+MAUS_VERSIONS = []
+MICE_DATA_DIR = ""
+
+
+RUN_KEYS = ['run', 'momentum', 'analysis_code', 'tof1_triggers', 'tof2_triggers']
+ANALYSIS_KEYS = ['momentum', 'cooling_channel', 'beamline', 'diffuser', 'absorber']
+
+
+def load_config(namespace, data) :
+  global MAUS_VERSIONS
+  global MICE_DATA_DIR
+
+  MAUS_VERSIONS = data['config']['maus_versions']
+  MICE_DATA_DIR = data['config']['mice_data_directory']
+
+
+def build_file_name(run_number) :
+  run = str(run_number)
+  run_dir = run[0:3]+"00"
+  file_name = run+"_recon.root"
+
+  for version in MAUS_VERSIONS :
+    file_path = os.path.join(MICE_DATA_DIR, version, run_dir, run, file_name)
+    if os.path.exists( file_path ) :
+      return file_path
+  else :
+    write( "Could Not Find Data File : "+run )
+
+  return None
+
+
+def format_analysis(code, datum) :
+  string = str(code) + " : " + str(datum['momentum']) + ", " + str(datum['cooling_channel']) + "  " + str(datum['beamline']) + ", Diff=" + str(datum['diffuser'])
+  return string
+
+
+def write(string="") :
+  if QUIET :
+    return
+  else :
+    print string
+
+
+def update_database(new_data) :
+  shutil.copyfile(DATA_FILE, DATA_FILE+".previous")
+  with open(DATA_FILE_WRITE, 'w') as outfile :
+    json.dump(new_data, outfile)
+
+
+def verify_cuts(cut_data) :
+  return cut_data
+
+
+def verify_config(config_data) :
+  return config_data
+
+
+def verify_analyses(analyses_data) :
+  return analyses_data
+
+ 
+def verify_runs(runs, analyses) :
+  new_runs = []
+  for run in runs :
+    if run['analysis_code'] not in analyses :
+      write("Code "+run['analysis_code']+" not know. Run: "+run['run'])
+    if len(run['run']) is not 5 :
+      write("Run number must be 5 characters: "+run['run'])
+
+    temp_run = {}
+    temp_run['run'] = str(run['run'])
+    temp_run['analysis_code'] = str(run['analysis_code'])
+    temp_run['momentum'] = str(run['momentum'])
+    new_runs.append(temp_run)
+
+  return new_runs
+
+
+def run_find(namespace, data) :
+  analysis_codes = []
+  run_requirements = []
+  analysis_requirements = []
+
+  if namespace.analysis is not None :
+    analysis_codes = [ namespace.analysis ]
+  else :
+    if namespace.channel is not None :
+      analysis_requirements.append(("cooling_channel", namespace.channel))
+    if namespace.beamline is not None :
+      analysis_requirements.append(("beamline", namespace.beamline))
+    if namespace.diffuser is not None :
+      analysis_requirements.append(("diffuser", int(namespace.diffuser)))
+
+    for analysis, details in data['analyses'].iteritems() :
+      for key, value in analysis_requirements :
+        if details[key] != value :
+          break
+      else : 
+        analysis_codes.append( analysis )
+
+
+
+  if namespace.momentum is not None :
+    run_requirements.append(("momentum", namespace.momentum))
+    
+  write("Finding...")
+  write()
+
+  run_data = data['runs']
+
+  if namespace.run_numbers is not None :
+    run_data = []
+    for run in data['runs'] :
+      if run['run'] in namespace.run_numbers :
+        run_data.append(run)
+
+
+  for run in run_data :
+    if run['analysis_code'] not in analysis_codes :
+      continue
+
+    for key, value in run_requirements :
+      if run[key] != value :
+        break
+
+    else :
+      filename = build_file_name(run['run'])
+      if filename is not None :
+        if QUIET :
+          print filename,
+        else :
+          print run['run'], run['momentum'], run['analysis_code'], filename
+
+
+
+def run_details(namespace, data) :
+  analysis = namespace.run_number
+
+  if not namespace.A :
+    for run in data['runs'] :
+      if run['run'] == analysis :
+        analysis = run['analysis_code']
+        break
+    else :
+      write("Could not find Run Number "+str(analysis)+" in database")
+      return
+
+  analysis_datum = data['analyses'][analysis]
+
+  if namespace.analysis :
+    print analysis
+  elif namespace.momentum :
+    print analysis_datum['momentum']
+  elif namespace.channel :
+    print analysis_datum['cooling_channel']
+  elif namespace.beamline :
+    print analysis_datum['beamline']
+  elif namespace.diffuser :
+    print analysis_datum['diffuser']
+  else :
+    print format_analysis(analysis, analysis_datum)
+
+
+def run_verify(namespace, data) :
+  if namespace.new_file is not None :
+    DATA_FILE_WRITE = namespace.new_file
+
+
+  new_data = {}
+  new_data['cuts'] = verify_analyses(data['cuts'])
+  new_data['analyses'] = verify_analyses(data['analyses'])
+  new_data['runs'] = verify_runs(data['runs'], data['analyses'])
+  new_data['config'] = verify_config(data['config'])
+
+  if new_data == data :
+    write("Verified. No Errors or Warnings")
+  else :
+    write()
+    write("Found inconsistencies")
+    if namespace.write :
+      write("Correcting Data File and Saving")
+      write()
+      update_database(new_data)
+
+  write()
+
+
+def run_add_runs(namespace, data) :
+  run_numbers = namespace.run_numbers
+  analysis = namespace.analysis
+  momentum = namespace.momentum
+
+  if analysis is None :
+    print "Analysis Code is required."
+    return
+
+  if analysis not in data['analyses'] :
+    print "Could not find analysis code:", analysis
+    print "Please add the analysis code(s) before adding run numbers."
+    return 
+
+  if momentum is None :
+    momentum = data['analyses'][analysis]['momentum']
+
+  for run in run_numbers :
+    try :
+      test = int(run)
+      if len(run) != 5 :
+        print "Not a valid run number: "+run
+        print "Should be like: 00000"
+        return
+    except :
+      print "Not a valid run number: "+run
+      return
+
+  existing_runs = []
+  for run in run_numbers :
+    for datum in data['runs'] :
+      if run == datum['run'] :
+        existing_runs.append(datum)
+  if len(existing_runs) > 0 :
+    print len(existing_runs), "run(s) already exist in database."
+    if not namespace.force :
+      print "Database not updated. (Run with --force)"
+      return 
+    else :
+      print "Runs will be overwritten."
+
+  for run in existing_runs :
+    data['runs'].remove(run)
+  for run in run_numbers :
+    new_run = { 'run' : run, 'analysis_code' : analysis, 'momentum' : momentum }
+    data['runs'].append(new_run)
+
+  print momentum, analysis, run_numbers
+  update_database(data)
+
+
+def run_add_analysis(namespace, data) :
+  code = namespace.code
+  if code in data['analyses'] :
+    print "Analysis Code:", code, "already exists. Updating analysis details."
+    if not namespace.force :
+      print "Database not updated. (Run with --force)"
+      return
+
+    analysis = data['analyses'][code]
+    momentum = analysis['momentum']
+    channel = analysis['cooling_channel']
+    beamline = analysis['beamline']
+    diffuser = analysis['diffuser']
+
+    if namespace.momentum is not None :
+      momentum = namespace.momentum
+    if namespace.channel is not None :
+      channel = namespace.channel
+    if namespace.beamline is not None :
+      beamline = namespace.beamline
+    if namespace.diffuser is not None :
+      diffuser = namespace.diffuser
+
+  else :
+    momentum = namespace.momentum
+    channel = namespace.channel
+    beamline = namespace.beamline
+    diffuser = namespace.diffuser
+
+    if momentum is None :
+      print "Momentum is required."
+      return
+    if channel is None :
+      print "Cooling Channel Setting is required."
+      return
+    if beamline is None :
+      print "Beamline Settings are required."
+      return
+    if diffuser is None :
+      diffuser = 0
+      print "Default diffuser setting (0) used."
+
+
+  datum = {}
+  datum['momentum'] = momentum
+  datum['cooling_channel'] = channel
+  datum['beamline'] = beamline
+  datum['diffuser'] = diffuser
+
+  print "Adding Analysis:", format_analysis(code, datum)
+
+  data['analyses'][code] = datum
+  print "Writing new database file."
+  update_database(data)
+
+
+
+def run_cut(namespace, data) :
+  all_cuts = data['cuts']
+  analysis_code = namespace.analysis_code
+
+  if namespace.momentum is not None : 
+    if all_cuts[analysis_code]['momentum'] :
+      print all_cuts[analysis_code]['momentum'][0], all_cuts[analysis_code]['momentum'][1]
+    else :
+      write("No momentum cut available for analysis: "+analysis_code)
+
+
+
+def run_remove(namespace, data) :
+  write("REMOVE Functionality not yet implemented.")
+  write("Nothing has happened.")
+  write()
+
+
+def run_config(namespace, data) :
+  update = False
+  if 'config' not in data :
+    data['config'] = {}
+
+  if namespace.maus_versions is not None :
+    data['config']['maus_versions'] = namespace.maus_versions
+    update = True
+
+  if namespace.data_directory is not None :
+    data['config']['mice_data_directory'] = namespace.data_directory
+    update = True
+
+  print "Configuration:"
+  print "MAUS Versions For Analysis:"
+  for version in data['config']['maus_versions'] :
+    print " o ", version
+  print "MICE Data Directory:"
+  print "   ", data['config']['mice_data_directory']
+
+  if update :
+    update_database(data)
+    print
+    print "Database was updated successfully."
+
+
+if __name__ == "__main__" :
+  parser = argparse.ArgumentParser(description="Accesses the library of runs and default cuts")
+
+  parser.add_argument('-Q', '--pipe_mode', action="store_true", help="Quiet. Prints one file per line for piping into other processes.")
+  parser.add_argument('--database', default=DATA_FILE, help='Specify a database file')
+  parser.add_argument('--new_file', default=DATA_FILE, help='Specify an output path for new databases.')
+  
+  subparsers = parser.add_subparsers( help="Action to take" )
+
+  find_parser = subparsers.add_parser( 'find', help="Retuns a list of files based on the arguments provided" )
+  find_parser.add_argument('--analysis', default=None, help="Analysis code to search for.")
+  find_parser.add_argument('--channel', default=None, help="Cooling Channel ID to search for.")
+  find_parser.add_argument('--beamline', default=None, help="Beamline settings to search for.")
+  find_parser.add_argument('--diffuser', default=None, help="Diffuser settings to search for.")
+  find_parser.add_argument('--momentum', default=None, help="Beam Momentum to search for.")
+  find_parser.add_argument('--run_numbers', default=None, nargs='+', help="Run Numbers to search for.")
+  find_parser.set_defaults(func=run_find)
+
+  details_parser = subparsers.add_parser( 'detail', help="Returns details for a particular Run or Analysis Code." )
+  details_parser.add_argument('run_number', help="Run number (default) or analysis code to describe")
+  details_parser.add_argument('-A', action='store_true', help="Analysis Code to describe. Run number is assumed by default" )
+  details_parser.add_argument('--analysis', action='store_true', help="Return the analysis code." )
+  details_parser.add_argument('--momentum', action='store_true', help="Return the nominal beam momentum." )
+  details_parser.add_argument('--channel', action='store_true', help="Return the Cooling Channel Setting." )
+  details_parser.add_argument('--beamline', action='store_true', help="Return the Beamline Setting." )
+  details_parser.add_argument('--diffuser', action='store_true', help="Return the diffuser Setting." )
+  details_parser.set_defaults(func=run_details)
+
+  add_parser = subparsers.add_parser( 'add', help="Adds entries to the database" )
+  add_subparsers = add_parser.add_subparsers( help="" )
+
+  add_analysis_parser = add_subparsers.add_parser( 'analysis', help="Add a new Analysis Code to the database." )
+  add_analysis_parser.add_argument('code', default=None, help="Name of new analysis code." )
+  add_analysis_parser.add_argument('--momentum', default=None, help="Nominal momentum of analysis." )
+  add_analysis_parser.add_argument('--channel', default=None, help="Cooling Channel ID." )
+  add_analysis_parser.add_argument('--beamline', default=None, help="Beamline Settings." )
+  add_analysis_parser.add_argument('--diffuser', default=None, help="Diffuser Setting." )
+  add_analysis_parser.add_argument('-f', '--force', action='store_true', help="Overwrite existing analyses.")
+  add_analysis_parser.set_defaults(func=run_add_analysis)
+
+  add_runs_parser = add_subparsers.add_parser('runs', help="Add a list of run numbers to the database.")
+  add_runs_parser.add_argument('--analysis', default=None, help="Analysis Code to which the runs are added.")
+  add_runs_parser.add_argument('--momentum', default=None, help="Nominal momentum for the run.")
+  add_runs_parser.add_argument('-f', '--force', action='store_true', help="Overwrite existing runs.")
+  add_runs_parser.add_argument('run_numbers', nargs='+', help="List of run numbers.")
+  add_runs_parser.set_defaults(func=run_add_runs)
+
+  remove_parser = subparsers.add_parser( 'remove', help="Removes entries from the database" )
+  remove_parser.set_defaults(func=run_remove)
+
+  cut_parser = subparsers.add_parser( 'cut', help="Returns the cut parameters for the requested analysis code" )
+  cut_parser.add_argument('analysis_code', help="Analysis code to which to cut applies")
+  cut_parser.add_argument('--momentum', help="Return the total momentum limits")
+  cut_parser.set_defaults(func=run_cut)
+
+  verify_parser = subparsers.add_parser( 'verify', help="Verifies the database file" )
+  verify_parser.add_argument('--write', action="store_true", help='Re-write the database after verification')
+  verify_parser.add_argument('--new_file', default=DATA_FILE, help='Write verified database to a new file')
+  verify_parser.set_defaults(func=run_verify)
+
+  config_parser = subparsers.add_parser( 'config', help="Displays and edits configuration settings" )
+  config_parser.add_argument('--maus_versions', default=None, nargs='+', help='Set the MAUS Versions that should be allowed for analysis')
+  config_parser.add_argument('--data_directory', default=None, help="Parent directory that contains the reconstructed data")
+  config_parser.set_defaults(func=run_config)
+
+
+  namespace = parser.parse_args()
+
+  QUIET = namespace.pipe_mode
+  DATA_FILE = namespace.database
+  DATA_FILE_WRITE = namespace.new_file
+
+  data = None
+  with open(DATA_FILE, 'r') as infile :
+    data = json.load(infile)
+
+  write()
+
+  load_config(namespace, data)
+  namespace.func(namespace, data)
+
+  write()
+
