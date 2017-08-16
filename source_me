@@ -1,1 +1,82 @@
-/vols/build/mice/shared/env/maus_env_v2.6.1.sh
+#!/bin/bash
+#
+# Setup IC MICE Shared Software
+#
+
+
+# Check to ensure this script is being used correctly
+if [ "$0" = "$BASH_SOURCE" ]
+then
+  echo 
+  echo "ERROR, please source this script, like \"source /path/to/source_me\""
+  echo
+  exit 0
+fi
+
+
+# Basic Configuration. Shouldn't really change
+SHARED_DIR=$(dirname $BASH_SOURCE)
+LIB_DIR=$SHARED_DIR/lib
+BIN_DIR=$SHARED_DIR/bin
+CONFIG_DIR=$SHARED_DIR/.config
+
+
+# Check to see if it is install correctly
+if [ ! -e $CONFIG_DIR/maus ]
+then
+  echo
+  echo "Could not locate configuration."
+  echo "Have you installed this package correctly?"
+  echo
+  return 0
+fi
+
+
+# Get the MAUS Directory Location
+MAUS_DIR=$(cat $CONFIG_DIR/maus)
+
+# Capture the arguments
+USE_PERSONAL_MAUS=false
+while [[ $# > 0 ]]
+do
+  key=$1
+
+  case $key in 
+    -F)
+    USE_PERSONAL_MAUS=true
+    shift
+    ;;
+  esac
+done
+
+
+echo
+echo "Configuring IC MICE Shared Software."
+
+# Check if MAUS Environment present - Can use your own install if forced.
+if [ ! -z "$MAUS_ROOT_DIR" ]
+then
+  if [ $USE_PERSONAL_MAUS = true ]
+  then
+    echo "Current MAUS install detected. Using -F flag."
+  else
+    echo "Current MAUS install detected."
+    echo "If you would like to use your personal version of MAUS, rather than the recommended one, please use the -F flag."
+    echo
+    return 0
+  fi
+else
+  echo "Sourcing the recommended MAUS Install."
+  source $MAUS_DIR/env.sh
+fi
+
+# Configure Path Vaiables
+echo "Configuring Path Vaiables."
+export PATH=$BIN_DIR:$PATH
+export PYTHONPATH=$LIB_DIR:$PYTHONPATH
+export LD_LIBRARY_PATH=$LIB_DIR:$LD_LIBRARY_PATH
+export ICMICE=$SHARED_DIR
+
+echo "Setup Complete"
+echo
+
