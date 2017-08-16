@@ -62,6 +62,7 @@ then
   else
     echo "Current MAUS install detected."
     echo "If you would like to use your personal version of MAUS, rather than the recommended one, please use the -F flag."
+    echo
     return 0
   fi
 else
