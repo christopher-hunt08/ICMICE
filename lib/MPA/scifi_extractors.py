@@ -958,7 +958,7 @@ class scifi_helical_track_processor(framework.processor_base) :
 
   def get_args(self, parser) :
     parser.add_argument( '--select_plane', type=int, nargs=3, default=None, help='Specify the <tracker> <station> <plane> to act as the selection plane' )
-    parser.add_argument( '--helix_cut_chisq_ndf', type=float, default=0.0, \
+    parser.add_argument( '--helix_cut_chisq_ndf', type=float, default=100.0, \
            help='Set the cut on the tracker Chi Square per degree of freedom' )
     parser.add_argument( '--helix_cut_number_trackpoints', type=int, default=0, \
                     help='Set the cut on the number of trackpoints per track' )
