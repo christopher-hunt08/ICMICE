@@ -32,6 +32,7 @@ from analysis import covariances
 from analysis import tools
 from analysis import hit_types
 from analysis import inspectors
+from analysis.tools import MUON_MASS
 
 """
   Virtual Hit Analysis Classes are stored here.
@@ -81,6 +82,59 @@ class plane_data() :
 
     if self.inspector is not None :
       self.inspector.add_hit(ana_hit)
+
+
+  def get_data_dictionary(self) :
+    ins_data = {}
+    ins_data['position'] = self.plane_position
+    ins_data['plane'] = self.plane_id
+
+    means = self.covariance.get_means( ['x', 'px', 'y', 'py', 'pz', 'E'] )
+
+    ins_data['x_mean'] = means['x']
+    ins_data['y_mean'] = means['px']
+    ins_data['px_mean'] = means['y']
+    ins_data['py_mean'] = means['py']
+    ins_data['pz_mean'] = means['pz']
+    ins_data['energy'] = means['E']
+
+    p = math.sqrt( means['E']**2 - MUON_MASS**2 )
+
+    number = self.covariance.length()
+    if number > 1 :
+      ins_data['emittance'] = self.covariance.get_emittance(['x', 'px', 'y', 'py'])
+      ins_data['emittance_x'] = self.covariance.get_emittance(['x', 'px'])
+      ins_data['emittance_y'] = self.covariance.get_emittance(['y', 'py'])
+      ins_data['beta'] = self.covariance.get_beta(['x', 'y'])
+      ins_data['beta_x'] = self.covariance.get_beta(['x'])
+      ins_data['beta_y'] = self.covariance.get_beta(['y'])
+      ins_data['alpha'] = self.covariance.get_alpha(['x', 'y'])
+      ins_data['alpha_x'] = self.covariance.get_alpha(['x'])
+      ins_data['alpha_y'] = self.covariance.get_alpha(['y'])
+      ins_data['momentum'] = p
+      ins_data['number_particles'] = number
+
+      cov = self.covariance.get_covariance_matrix(['x', 'px', 'y', 'py'])
+
+    else :
+      ins_data['emittance'] = 0.0
+      ins_data['emittance_x'] = 0.0
+      ins_data['emittance_y'] = 0.0
+      ins_data['beta'] = 0.0
+      ins_data['beta_x'] = 0.0
+      ins_data['beta_y'] = 0.0
+      ins_data['alpha'] = 0.0
+      ins_data['alpha_x'] = 0.0
+      ins_data['alpha_y'] = 0.0
+      ins_data['momentum'] = 0.0
+      ins_data['number_particles'] = 0
+
+      cov = [ [ 0.0 for i in range(4) ] for j in range(4) ]
+
+    ins_data['covariance_matrix'] = [ [ cov[i][j] for i in range(4) ] for j in range(4) ]
+
+
+    return ins_data
 
 
 ################################################################################
@@ -507,7 +561,7 @@ class virtual_beam_properties(framework.processor_base) :
   def _store_data(self, data_dict) :
 
     inspector_counter = 0
-    inspector_data = []
+    inspector_data = {}
 
     if self.__analyse_primaries :
       data_dict['primaries'] = self.__primaries.inspector.get_data_dictionary()
@@ -518,8 +572,7 @@ class virtual_beam_properties(framework.processor_base) :
       if num <= 1 :
         continue
 
-      if datum.inspector is not None :
-        inspector_data.append(datum.inspector.get_data_dictionary())
+      inspector_data[plane_i] = datum.get_data_dictionary()
 
     data_dict['inspections'] = inspector_data
     data_dict['number_planes_analysed'] = len(self.__plane_list)
