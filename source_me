@@ -14,8 +14,8 @@ then
 fi
 
 
-# Basic Configuration. Shouldn't really change
-SHARED_DIR=$(dirname $BASH_SOURCE)
+# Basic Configuration. ehouldn't really change
+SHARED_DIR=$(dirname $(readlink -f $BASH_SOURCE))
 LIB_DIR=$SHARED_DIR/lib
 BIN_DIR=$SHARED_DIR/bin
 CONFIG_DIR=$SHARED_DIR/.config
