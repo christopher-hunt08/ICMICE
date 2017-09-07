@@ -22,6 +22,7 @@ import ROOT
 import os
 import math
 import array
+import numpy
 from sets import Set
 
 import framework
@@ -48,8 +49,24 @@ class plane_data() :
     self.plane_position = 0.0
     self.field_sum = [0.0, 0.0, 0.0]
     self.inspector = None
+    self.parent = None
+    self.parent_inverse = None
+    self.brightness = 0.0
 
     self.covariance = covariances.CovarianceMatrix()
+
+
+  def set_parent(self, parent_covariance, brightness_boundary=4.0) :
+    self.parent = parent_covariance
+    self.brightness_boundary = brightness_boundary
+
+    try :
+      self.parent = numpy.array(parent_covariance)
+      self.parent_inverse = numpy.linalg.inv(self.parent)
+    except :
+      self.parent = None
+      self.parent_inverse = None
+
 
   def get_mean_field(self) :
     num = self.covariance.length()
@@ -62,10 +79,21 @@ class plane_data() :
     self.field_sum[0] += field.x()*1000.0
     self.field_sum[1] += field.y()*1000.0
     self.field_sum[2] += field.z()*1000.0
-    self.covariance.add_hit(hit_types.AnalysisHit(virtual_track_point=hit))
+    the_hit = hit_types.AnalysisHit(virtual_track_point=hit)
+    self.covariance.add_hit(the_hit)
+
+    if self.parent is not None :
+      amp = self.calculate_amplitude(the_hit)
+      if amp < self.brightness_boundary :
+        self.brightness += the_hit.get_weight()
 
     if self.inspector is not None :
-      self.inspector.add_hit(hit_types.AnalysisHit(virtual_track_point=hit))
+      self.inspector.add_hit(the_hit)
+
+
+  def calculate_amplitude(self, hit) :
+    vec = numpy.array(hit.get_as_vector()[2:6])
+    return vec.transpose().dot(self.parent_inverse).dot(vec)
 
 
   def add_primary(self, hit) :
@@ -101,7 +129,7 @@ class plane_data() :
     p = math.sqrt( means['E']**2 - MUON_MASS**2 )
 
     number = self.covariance.length()
-    if number > 1 :
+    if number > 100 :
       ins_data['emittance'] = self.covariance.get_emittance(['x', 'px', 'y', 'py'])
       ins_data['emittance_x'] = self.covariance.get_emittance(['x', 'px'])
       ins_data['emittance_y'] = self.covariance.get_emittance(['y', 'py'])
@@ -112,6 +140,7 @@ class plane_data() :
       ins_data['alpha_x'] = self.covariance.get_alpha(['x'])
       ins_data['alpha_y'] = self.covariance.get_alpha(['y'])
       ins_data['momentum'] = p
+      ins_data['brightness'] = self.brightness / number
       ins_data['number_particles'] = number
 
       cov = self.covariance.get_covariance_matrix(['x', 'px', 'y', 'py'])
@@ -127,6 +156,7 @@ class plane_data() :
       ins_data['alpha_x'] = 0.0
       ins_data['alpha_y'] = 0.0
       ins_data['momentum'] = 0.0
+      ins_data['brightness'] = 0.0
       ins_data['number_particles'] = 0
 
       cov = [ [ 0.0 for i in range(4) ] for j in range(4) ]
@@ -374,6 +404,15 @@ class virtual_beam_properties(framework.processor_base) :
             self.__plane_cuts[plane_id] = virtual_cut(plane_id)
           self.__plane_cuts[plane_id].set_radius(cut)
 
+    if framework.get_last_analysis_json() is not None :
+      inspections = framework.get_last_analysis_json()['inspections']
+      for key in inspections :
+        plane_id = int(key)
+        data = inspections[key]
+        cov = numpy.array(data['covariance_matrix'])
+        self._add_plane(plane_id)
+        self.__plane_list[plane_id].set_parent(cov)
+
 
   def _analyse_primaries(self, primary) :
     self.__primaries.add_primary(primary)
@@ -489,6 +528,7 @@ class virtual_beam_properties(framework.processor_base) :
 #    conam = array.array('d')
     field = array.array('d')
     number = array.array('d')
+    brightness = array.array('d')
 
     if self.__analyse_primaries :
       virt_plots['primaries'] = self.__primaries.inspector.get_plot_dictionary()
@@ -504,6 +544,7 @@ class virtual_beam_properties(framework.processor_base) :
       am.append(self.__primaries.inspector.covariance.get_angular_momentum())
 #      conam.append(self.__primaries.inspector.covariance.get_canonical_angular_momentum(datum.get_mean_field()[2]))
       number.append(self.__primaries.inspector.covariance.length())
+      number.append(self.__primaries.brightness/self.__primaries.inspector.covariance.length())
 
 
     for datum in self.__plane_list :
@@ -521,6 +562,7 @@ class virtual_beam_properties(framework.processor_base) :
 #      conam.append(datum.covariance.get_canonical_angular_momentum(datum.get_mean_field()[2]))
       field.append(datum.get_mean_field()[2])
       number.append(datum.covariance.length())
+      brightness.append(datum.brightness/datum.covariance.length())
 
       if datum.inspector is not None :
         inspection_plots[str(datum.inspector.plane)] = datum.inspector.get_plot_dictionary()
@@ -538,6 +580,7 @@ class virtual_beam_properties(framework.processor_base) :
       virt_plots['beam_rms'] = None
       virt_plots['field'] = None
       virt_plots['number'] = None
+      virt_plots['brightness'] = None
       virt_plots['beam_rms'] = None
     else :
       virt_plots['alpha_function'] = ROOT.TGraph(len(z_pos), z_pos, alpha)
@@ -551,6 +594,7 @@ class virtual_beam_properties(framework.processor_base) :
       virt_plots['beam_rms'] = ROOT.TGraph(len(z_pos), z_pos, beam_rms)
       virt_plots['field'] = ROOT.TGraph(len(z_pos), z_pos, field)
       virt_plots['number'] = ROOT.TGraph(len(z_pos), z_pos, number)
+      virt_plots['brightness'] = ROOT.TGraph(len(z_pos), z_pos, brightness)
       virt_plots['beam_rms'] = ROOT.TGraph(len(z_pos), z_pos, beam_rms)
 
     plot_dict['virtual_plots'] = virt_plots

@@ -57,16 +57,8 @@ if __name__ == "__main__" :
     try :
       while analysis_engine.next_event() :
         try :
-          sys.stdout.write( 
-              ' Spill ' + str(file_reader.get_current_spill_number()) + \
-              ' of ' + str(file_reader.get_current_number_spills()) + \
-              ' in File ' + str(file_reader.get_current_filenumber()) + \
-              ' of ' + str(file_reader.get_number_files()) + '             \r')
-
-          sys.stdout.flush()
 
 ##### 3. Perform Analysis  ####################################################
-
           analysis_engine.analyse_event()
 
         except ValueError as ex:
