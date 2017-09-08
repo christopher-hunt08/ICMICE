@@ -50,6 +50,7 @@ class plane_data() :
     self.field_sum = [0.0, 0.0, 0.0]
     self.inspector = None
     self.parent = None
+    self.parent_emittance = 0.0
     self.parent_inverse = None
     self.brightness = 0.0
 
@@ -61,9 +62,11 @@ class plane_data() :
     self.brightness_boundary = brightness_boundary
 
     try :
+      self.parent_emittance = covariances.emittance_from_matrix(self.parent)
       self.parent = numpy.array(parent_covariance)
       self.parent_inverse = numpy.linalg.inv(self.parent)
     except :
+      self.parent_emittance = 0.0
       self.parent = None
       self.parent_inverse = None
 
@@ -93,7 +96,7 @@ class plane_data() :
 
   def calculate_amplitude(self, hit) :
     vec = numpy.array(hit.get_as_vector()[2:6])
-    return vec.transpose().dot(self.parent_inverse).dot(vec)
+    return self.parent_emittance*vec.transpose().dot(self.parent_inverse).dot(vec)
 
 
   def add_primary(self, hit) :
@@ -141,6 +144,7 @@ class plane_data() :
       ins_data['alpha_y'] = self.covariance.get_alpha(['y'])
       ins_data['momentum'] = p
       ins_data['brightness'] = self.brightness / number
+#      ins_data['brightness'] = self.brightness
       ins_data['number_particles'] = number
 
       cov = self.covariance.get_covariance_matrix(['x', 'px', 'y', 'py'])
@@ -246,6 +250,7 @@ class virtual_beam_properties(framework.processor_base) :
     self.__primaries = plane_data("primaries")
     self.__primaries.inspector = inspectors.PhaseSpace2DInspector("primaries", 0)
     self.__analyse_primaries = False
+    self.__brightness_boundary = 0.0
 
     self.__plane_list = []
     self.__plane_list_length = 0
@@ -333,6 +338,8 @@ class virtual_beam_properties(framework.processor_base) :
     parser.add_argument('--save_data_file', default=None, \
           help='Save the results to a plain text data file')
 
+    parser.add_argument('--brightness_boundary', metavar='brightness', \
+        default=4.0, type=float, help="Brightness Contour Value" )
     parser.add_argument('--virt_cut_radius', nargs='+', metavar='cut_info', \
             action='append',\
             default=None, help='Cut on the radius of beam at multiple planes.')
@@ -361,6 +368,7 @@ class virtual_beam_properties(framework.processor_base) :
     self.__virt_ensemble_size = namespace.virt_ensemble_size
     self.__save_data_file = namespace.save_data_file
     self.__analyse_primaries = namespace.analyse_primaries
+    self.__brightness_boundary = namespace.brightness_boundary
 
     if namespace.not_global_cuts :
       self.__global_cuts = False
@@ -411,7 +419,7 @@ class virtual_beam_properties(framework.processor_base) :
         data = inspections[key]
         cov = numpy.array(data['covariance_matrix'])
         self._add_plane(plane_id)
-        self.__plane_list[plane_id].set_parent(cov)
+        self.__plane_list[plane_id].set_parent(cov, brightness_boundary=self.__brightness_boundary)
 
 
   def _analyse_primaries(self, primary) :
@@ -545,6 +553,7 @@ class virtual_beam_properties(framework.processor_base) :
 #      conam.append(self.__primaries.inspector.covariance.get_canonical_angular_momentum(datum.get_mean_field()[2]))
       number.append(self.__primaries.inspector.covariance.length())
       number.append(self.__primaries.brightness/self.__primaries.inspector.covariance.length())
+#      number.append(self.__primaries.brightness)
 
 
     for datum in self.__plane_list :
@@ -563,6 +572,7 @@ class virtual_beam_properties(framework.processor_base) :
       field.append(datum.get_mean_field()[2])
       number.append(datum.covariance.length())
       brightness.append(datum.brightness/datum.covariance.length())
+#      brightness.append(datum.brightness)
 
       if datum.inspector is not None :
         inspection_plots[str(datum.inspector.plane)] = datum.inspector.get_plot_dictionary()
