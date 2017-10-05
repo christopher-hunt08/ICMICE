@@ -205,9 +205,9 @@ class scifi_straight_track_candidates(framework.processor_base) :
     self.__up_pval = ROOT.TH1F('ste_up_p_value', \
                                                "Track P Values", 500, 0.0, 1.0)
     self.__up_chisqndf = ROOT.TH1F('ste_up_chi2ndf', \
-                                               "Track P Values", 500, 0.0, 1.0)
+                                              "Track P Values", 500, 0.0, 10.0)
     self.__up_chisqndf_cut = ROOT.TH1F('ste_up_chi2ndf_cut', \
-                                     "Track Chi2 per NDF (Cut)", 500, 0.0, 1.0)
+                                    "Track Chi2 per NDF (Cut)", 500, 0.0, 10.0)
     self.__up_ntps = ROOT.TH1F('ste_up_no_trackpoints', \
                                        "Number of Trackpoints", 17, -0.5, 16.5)
     self.__up_ntps_cut = ROOT.TH1F('ste_up_no_trackpoints_cut', \
@@ -226,9 +226,9 @@ class scifi_straight_track_candidates(framework.processor_base) :
     self.__down_pval = ROOT.TH1F('ste_down_p_value', "Track P Values", \
                                                                  500, 0.0, 1.0)
     self.__down_chisqndf = ROOT.TH1F('ste_down_chi2ndf', \
-                                           "Track Chi2 per NDF", 500, 0.0, 1.0)
+                                          "Track Chi2 per NDF", 500, 0.0, 10.0)
     self.__down_chisqndf_cut = ROOT.TH1F('ste_down_chi2ndf_cut', \
-                                     "Track Chi2 per NDF (Cut)", 500, 0.0, 1.0)
+                                    "Track Chi2 per NDF (Cut)", 500, 0.0, 10.0)
     self.__down_ntps = ROOT.TH1F('ste_down_no_trackpoints', \
                                        "Number of Trackpoints", 17, -0.5, 16.5)
     self.__down_ntps_cut = ROOT.TH1F('ste_down_no_trackpoints_cut', \
@@ -599,9 +599,9 @@ class scifi_helical_track_candidates(framework.processor_base) :
     self.__up_pval = ROOT.TH1F('hte_up_p_value', \
                                                "Track P Values", 500, 0.0, 1.0)
     self.__up_chisqndf = ROOT.TH1F('hte_up_chisqndf', \
-                                             "Track P Chi2 NDF", 500, 0.0, 1.0)
+                                            "Track P Chi2 NDF", 500, 0.0, 10.0)
     self.__up_chisqndf_cut = ROOT.TH1F('hte_up_chisqndf_cut', \
-                                       "Track P Chi2 NDF (Cut)", 500, 0.0, 1.0)
+                                      "Track P Chi2 NDF (Cut)", 500, 0.0, 10.0)
     self.__up_ntps = ROOT.TH1F('hte_up_no_trackpoints', \
                                        "Number of Trackpoints", 17, -0.5, 16.5)
     self.__up_ntps_cut = ROOT.TH1F('hte_up_no_trackpoints_cut', \
@@ -615,9 +615,9 @@ class scifi_helical_track_candidates(framework.processor_base) :
     self.__down_pval = ROOT.TH1F('hte_down_p_value', "Track P Values", \
                                                                  500, 0.0, 1.0)
     self.__down_chisqndf = ROOT.TH1F('hte_down_chisqndf', \
-                                             "Track P Chi2 NDF", 500, 0.0, 1.0)
+                                            "Track P Chi2 NDF", 500, 0.0, 10.0)
     self.__down_chisqndf_cut = ROOT.TH1F('hte_down_chisqndf_cut', \
-                                       "Track P Chi2 NDF (Cut)", 500, 0.0, 1.0)
+                                      "Track P Chi2 NDF (Cut)", 500, 0.0, 10.0)
     self.__down_ntps = ROOT.TH1F('hte_down_no_trackpoints', \
                                        "Number of Trackpoints", 17, -0.5, 16.5)
     self.__down_ntps_cut = ROOT.TH1F('hte_down_no_trackpoints_cut', \
@@ -899,9 +899,9 @@ class scifi_helical_track_processor(framework.processor_base) :
     self.__plot_pval = ROOT.TH1F('hte_p_value', \
                                                     "Track P Values", 500, 0.0, 1.0)
     self.__plot_chisqndf = ROOT.TH1F('hte_chisqndf', \
-                                               "Track ChiSq per DoF", 500, 0.0, 1.0)
+                                              "Track ChiSq per DoF", 500, 0.0, 10.0)
     self.__plot_chisqndf_cut = ROOT.TH1F('hte_chisqndf_cut', \
-                                         "Track ChiSq per DoF (Cut)", 500, 0.0, 1.0)
+                                        "Track ChiSq per DoF (Cut)", 500, 0.0, 10.0)
     self.__plot_ntps = ROOT.TH1F('hte_no_trackpoints', \
                                             "Number of Trackpoints", 17, -0.5, 16.5)
     self.__plot_ntps_cut = ROOT.TH1F('hte_no_trackpoints_cut', \
