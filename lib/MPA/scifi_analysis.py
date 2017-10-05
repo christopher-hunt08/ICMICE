@@ -469,9 +469,8 @@ class scifi_beam_selection(framework.processor_base) :
       if self.__do_weights :
         weight = framework.get_event_statistical_weight()
         for sampler in self.__samplers :
-          ampler.weight(hit)
+          sampler.weight(hit)
           if new_weight < 1.0e-9 :
-            tp.set_weight(0.0)
             self.__number_fail += 1
             self.__misses.add_hit(hit)
             return True
@@ -479,7 +478,6 @@ class scifi_beam_selection(framework.processor_base) :
             weight *= new_weight
         else :
           framework.set_event_statistical_weight(weight)
-          tp.set_weight(weight)
           self.__number_pass += 1
           return False
       else :
@@ -491,7 +489,6 @@ class scifi_beam_selection(framework.processor_base) :
             return True
         else :
           framework.set_event_statistical_weight(1.0)
-          tp.set_weight(1.0)
           self.__number_pass += 1
           return False
 
