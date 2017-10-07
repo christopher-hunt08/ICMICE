@@ -56,14 +56,19 @@ def main():
 #      print pos_z, pos_r, data
 #      print
 
+      bin_x = material_plot.GetXaxis().FindBin(pos_z)
+      bin_y = material_plot.GetYaxis().FindBin(pos_r)
+
       material = data['name']
       if material.startswith("G4_") :
         material = material[3:]
 
       if material in material_list :
-        material_plot.Fill(pos_z, pos_r, float(material_list.index(material)))
+#        material_plot.SetBinContent(pos_z, pos_r, float(material_list.index(material)))
+        material_plot.SetBinContent(bin_x, bin_y, float(material_list.index(material)))
       else :
-        material_plot.Fill(pos_z, pos_r, float(len(material_list)))
+#        material_plot.SetBinContent(pos_z, pos_r, float(len(material_list)))
+        material_plot.SetBinContent(bin_x, bin_y, float(len(material_list)))
         material_list.append(material)
 
       pos_z += STEP_SIZE
