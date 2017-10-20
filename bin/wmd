@@ -157,6 +157,31 @@ def run_find(namespace, data) :
           print run['run'], run['momentum'], run['analysis_code'], filename
 
 
+def run_search(namespace, data) :
+  analysis_codes = []
+
+  print "Finding..."
+  print
+
+  for analysis, details in data['analyses'].iteritems() :
+    if analysis.find(namespace.search_term) > -1 :
+      analysis_codes.append( analysis )
+      continue
+
+    for key in ANALYSIS_KEYS :
+      if key in details :
+        if str(details[key]).find(namespace.search_term) > -1 :
+          analysis_codes.append( analysis )
+          break
+
+  print "Found {0} Analysis Codes:".format(len(analysis_codes))
+  print
+
+  for analysis in analysis_codes :
+    print format_analysis(analysis, data['analyses'][analysis])
+
+
+
 
 def run_details(namespace, data) :
   analysis = namespace.run_number
@@ -371,7 +396,7 @@ if __name__ == "__main__" :
   
   subparsers = parser.add_subparsers( help="Action to take" )
 
-  find_parser = subparsers.add_parser( 'find', help="Retuns a list of files based on the arguments provided" )
+  find_parser = subparsers.add_parser( 'find', help="Retuns a list of file paths based on the arguments provided" )
   find_parser.add_argument('--analysis', default=None, help="Analysis code to search for.")
   find_parser.add_argument('--channel', default=None, help="Cooling Channel ID to search for.")
   find_parser.add_argument('--beamline', default=None, help="Beamline settings to search for.")
@@ -379,6 +404,10 @@ if __name__ == "__main__" :
   find_parser.add_argument('--momentum', default=None, help="Beam Momentum to search for.")
   find_parser.add_argument('--run_numbers', default=None, nargs='+', help="Run Numbers to search for.")
   find_parser.set_defaults(func=run_find)
+
+  search_parser = subparsers.add_parser( 'search', help="Returns analysis codes that meet the search criteria." )
+  search_parser.add_argument('search_term', default=None, help="Analysis code to search for.")
+  search_parser.set_defaults(func=run_search)
 
   details_parser = subparsers.add_parser( 'detail', help="Returns details for a particular Run or Analysis Code." )
   details_parser.add_argument('run_number', help="Run number (default) or analysis code to describe")
