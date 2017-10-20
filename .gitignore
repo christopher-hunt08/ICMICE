@@ -7,4 +7,5 @@
 *.old
 
 .config/
+.log/
 
