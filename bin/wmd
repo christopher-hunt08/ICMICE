@@ -13,9 +13,12 @@ import shutil
 import json
 import argparse
 
+import cdb
+
 
 QUIET = False
-DEFAULT_DATA_FILE = "/vols/mice/ch308/analysis_runs_database.json"
+DEFAULT_DATA_FILE = "/vols/mice/ch308/analysis_runs_database_test.json"
+CDB_SERVER = "http://cdb.mice.rl.ac.uk"
 
 ####################################################################################################
 
@@ -81,7 +84,20 @@ def verify_config(config_data) :
 
 
 def verify_analyses(analyses_data) :
-  return analyses_data
+  new_analyses = {}
+
+  for code, analysis in data['analyses'].iteritems() :
+    temp_analysis = {}
+
+    temp_analysis['beamline'] = str(analysis['beamline'])
+    temp_analysis['cooling_channel'] = str(analysis['cooling_channel'])
+    temp_analysis['diffuser'] = str(analysis['diffuser'])
+    temp_analysis['momentum'] = str(analysis['momentum'])
+    temp_analysis['absorber'] = str(analysis['absorber'])
+
+    new_analyses[code] = temp_analysis
+
+  return new_analyses
 
  
 def verify_runs(runs, analyses) :
@@ -387,6 +403,127 @@ def run_config(namespace, data) :
     print "Database was updated successfully."
 
 
+
+def run_update(namespace, data) :
+  print "Updating database from the CDB"
+  print "WARNING: This will change the database. You must be authorized to do so!"
+  print
+  result = raw_input("Continue y/n? ")
+  if result == 'y' or result == 'Y' :
+    print
+  else :
+    return
+
+  print "Initializing..."
+  print
+  # CDB Interface
+  cdb_channel = cdb.CoolingChannel(CDB_SERVER)
+  cdb_beamline = cdb.Beamline(CDB_SERVER)
+
+  # Get relevant run list
+  all_runs = sorted( cdb_beamline.get_run_numbers() )
+  the_runs = []
+  for run in all_runs :
+    if int(run) > namespace.start_run :
+      the_runs.append(run)
+
+
+  # Some pretty output
+  sys.stdout.write("Updating:   0%\b\b\b\b")
+  sys.stdout.flush()
+  total = len(the_runs)
+  percent = int(-1)
+
+  new_runs = {}
+  in_database = []
+  different = []
+  not_used = 0
+  new_runs = []
+  num_errors = 0
+
+
+  # Loop over all relevant run numbers
+  for counter, run in enumerate(the_runs) :
+    run = run.zfill(5)
+    int_run = int(run)
+    try :
+
+      run_channel = cdb_channel.get_coolingchannel_for_run(run)
+      run_beamline = cdb_beamline.get_beamline_for_run(run)[int_run]
+      run_absorber = cdb_channel.get_absorber_for_run(run).keys()[0][1]
+
+      new_percent = int((float(counter) / float(total)) * 100.0)
+      if new_percent != percent :
+        sys.stdout.write("{0:>3}".format(new_percent)+"\b\b\b")
+        sys.stdout.flush()
+        percent = new_percent
+
+      if type(run_channel) == list :
+        continue
+
+      for code, analysis in data['analyses'].iteritems() :
+
+        if run_channel['tag'] == analysis['cooling_channel'] and \
+           run_beamline['optics'] == analysis['beamline'] and \
+           int(run_beamline['diffuser_thickness']) == int(analysis['diffuser']) and \
+           run_absorber == analysis['absorber'] :
+
+          momentum = analysis['momentum']
+          new_run = { 'run' : run, 'analysis_code' : code, 'momentum' : momentum }
+
+          for datum in data['runs'] :
+            if int(run) == int(datum['run']) :
+
+              if datum['analysis_code'] != code :
+                different.append( datum )
+                new_runs.append( new_run )
+              else :
+                in_database.append( new_run )
+              break
+          else :
+            new_runs.append( new_run )
+
+          break
+      else :
+        not_used += 1
+
+    except cdb._exceptions.CdbPermanentError as ex :
+      num_errors += 1
+    except cdb._exceptions.CdbTemporaryError as ex :
+      print
+      print "An Temporary Error Occured. Please try Again Later"
+      print
+      return
+
+  print "\rUpdate Complete. Found:"
+  print
+  print "Existing Runs            : ", len(in_database)
+  print "Incorrect Analysis Code  : ", len(different)
+  print "New Runs                 : ", len(new_runs)
+  print "Non-Analysis Runs        : ", not_used
+  print
+  print "CDB Errors : ", num_errors
+  print
+
+  merge_yn = raw_input("Merge into Database y/n? ")
+  if merge_yn == 'y' or merge_yn == 'Y' :
+    print
+  else :
+    return
+
+  for run_data in different :
+    data['runs'].remove(run_data)
+  for run_data in new_runs :
+    data['runs'].append(run_data)
+
+  update_database(data)
+
+  print
+  print "Database Updated."
+  print
+
+
+
 if __name__ == "__main__" :
   parser = argparse.ArgumentParser(description="Accesses the library of runs and default cuts")
 
@@ -455,6 +592,10 @@ if __name__ == "__main__" :
   config_parser.add_argument('--maus_versions', default=None, nargs='+', help='Set the MAUS Versions that should be allowed for analysis')
   config_parser.add_argument('--data_directory', default=None, help="Parent directory that contains the reconstructed data")
   config_parser.set_defaults(func=run_config)
+
+  update_parser = subparsers.add_parser( 'update', help="Updates the run list against the defined Analysis Codes using the CDB")
+  update_parser.add_argument('--start_run', type=int, default=7400, help="Specify the starting point to update from.")
+  update_parser.set_defaults(func=run_update)
 
 
   namespace = parser.parse_args()
