@@ -17,7 +17,7 @@ import cdb
 
 
 QUIET = False
-DEFAULT_DATA_FILE = "/vols/mice/ch308/analysis_runs_database_test.json"
+DEFAULT_DATA_FILE = "/vols/mice/ch308/analysis_runs_database.json"
 CDB_SERVER = "http://cdb.mice.rl.ac.uk"
 
 ####################################################################################################
