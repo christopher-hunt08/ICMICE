@@ -279,6 +279,8 @@ class virtual_beam_properties(framework.processor_base) :
 
 
   def get_virtual_hits(self, plane_id) :
+    if self.__current_track is None :
+      return None
     if plane_id in self.__current_track :
       return self.__current_track[plane_id]
     else :
@@ -483,10 +485,11 @@ class virtual_beam_properties(framework.processor_base) :
             continue
           self.__plane_list[station_id].add_hit(virt)
 
-          if station_id in self.__current_track and virt.GetTrackId() == 1 :
-            self.__current_track[station_id][virt.GetTrackId()] = virt
-          else :
-            self.__current_track[station_id] = { virt.GetTrackId() : virt }
+          if virt.GetTrackId() == 1 :
+            if station_id in self.__current_track :
+              self.__current_track[station_id][virt.GetTrackId()] = virt
+            else :
+              self.__current_track[station_id] = { virt.GetTrackId() : virt }
 
 
   def conclude(self) :
