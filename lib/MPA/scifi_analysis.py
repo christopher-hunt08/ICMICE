@@ -730,7 +730,7 @@ class scifi_emittance_reconstruction(framework.processor_base) :
           for pl in self.__recon_planes :
             tp = self.__beam_selector.get_track_extractor(tr).get_trackpoint_byplane(st+1, pl)
             if tp is None : continue
-            if math.sqrt(tp.mom().X()**2 + tp.mom().Y()**2) > self.__cut_high_pt : continue
+            if math.sqrt(tp.mom().X()**2 + tp.mom().Y()**2) > self.__cut_high_pt : return True
 
             hit = hit_types.AnalysisHit(scifi_track_point=tp)
             if numpy.isnan(hit.get_x()) or numpy.isinf(hit.get_x()) :
@@ -756,7 +756,7 @@ class scifi_emittance_reconstruction(framework.processor_base) :
           for pl in self.__recon_planes :
             tp = self.__beam_selector.get_track_extractor(tr).get_trackpoint_byplane(st+1, pl)
             if tp is None : continue
-            if math.sqrt(tp.mom().X()**2 + tp.mom().Y()**2) > self.__cut_high_pt : continue
+            if math.sqrt(tp.mom().X()**2 + tp.mom().Y()**2) > self.__cut_high_pt : return True
 
             hit = hit_types.AnalysisHit(scifi_track_point=tp)
             hit.set_weight(weight)
