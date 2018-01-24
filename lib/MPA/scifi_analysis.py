@@ -554,6 +554,8 @@ class scifi_emittance_reconstruction(framework.processor_base) :
     self.__graphs = {'data':{}, 'mc':{}, 'residuals':{}}
     self.__cooling_inspector = None
 
+    self.__cut_high_pt = 1000.0
+
     self.__correction_upstream = None
     self.__correction_downstream = None
     self.__p_correction_upstream = [0.0, 0.0]
@@ -607,6 +609,8 @@ class scifi_emittance_reconstruction(framework.processor_base) :
     parser.add_argument( '--p_correction_upstream', nargs=2, help='Enter the linear correction (const + gradient) to the upstream total momentum.', default=[0.0, 0.0] )
     parser.add_argument( '--p_correction_downstream', nargs=2, help='Enter the linear correction (const + gradient) to the downstream total momentum.', default=[0.0, 0.0] )
 
+    parser.add_argument( '--cut_high_pt', type=float, default=self.__cut_high_pt, help='Remove tracks with a Pt that will not fit within the tracker bore' )
+
     parser.add_argument( '--require_upstream', action='store_true', help='Requires there the be precisely 1 track in the upstream tracker' )
     parser.add_argument( '--require_downstream', action='store_true', help='Requires there the be precisely 1 track in the downstream tracker' )
 
@@ -627,6 +631,8 @@ class scifi_emittance_reconstruction(framework.processor_base) :
 
     self.__reference_station = namespace.reference_plane[0]
     self.__reference_plane = namespace.reference_plane[1]
+
+    self.__cut_high_pt = namespace.cut_high_pt
 
     self.__unbias_results = namespace.unbias_results
     self.__ensemble_size = namespace.ensemble_size
@@ -724,6 +730,7 @@ class scifi_emittance_reconstruction(framework.processor_base) :
           for pl in self.__recon_planes :
             tp = self.__beam_selector.get_track_extractor(tr).get_trackpoint_byplane(st+1, pl)
             if tp is None : continue
+            if math.sqrt(tp.mom().X()**2 + tp.mom().Y()**2) > self.__cut_high_pt : continue
 
             hit = hit_types.AnalysisHit(scifi_track_point=tp)
             if numpy.isnan(hit.get_x()) or numpy.isinf(hit.get_x()) :
@@ -749,6 +756,7 @@ class scifi_emittance_reconstruction(framework.processor_base) :
           for pl in self.__recon_planes :
             tp = self.__beam_selector.get_track_extractor(tr).get_trackpoint_byplane(st+1, pl)
             if tp is None : continue
+            if math.sqrt(tp.mom().X()**2 + tp.mom().Y()**2) > self.__cut_high_pt : continue
 
             hit = hit_types.AnalysisHit(scifi_track_point=tp)
             hit.set_weight(weight)
