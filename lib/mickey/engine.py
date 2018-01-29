@@ -10,6 +10,7 @@ import event_loader
 import analysis.tools as tools
 
 import _parsing
+import event
 
 ## Some global variables to keep track of things between modules
 _last_json = None
@@ -21,10 +22,11 @@ _QUIET = False
 class Engine(object) :
 
 ####################################################################################################
-  def __init__(self, job_name) :
+  def __init__(self, job_name, description="") :
     self.__analysis_name = job_name
 
     self.__parser = argparse.ArgumentParser(description=description, conflict_handler='resolve')
+    _parsing.get_engine_parser(self.__parser, job_name)
     self.__file_reader = None
     self.__select_events = False
     self.__save_good_events = False
@@ -51,16 +53,19 @@ class Engine(object) :
 ####################################################################################################
   def analyse_event(self) :
     self.__event_counter += 1
-    set_event_statistical_weight(self.__file_reader.get_current_statistical_weight())
+#    set_event_statistical_weight(self.__file_reader.get_current_statistical_weight())
 
 
-    event = event.build_event(self.__file_reader.get_event)
+    maus_event = event.build_event(self.__file_reader.get_event)
+
+    maus_event.print_me()
 
     if self.__do_cuts :
+      pass
 
 
     if self.__do_analysis :
-
+      pass
 
    ## MAGIC GOES HERE 
 
@@ -180,20 +185,21 @@ class Engine(object) :
     global _QUIET
 
 
-    if self.__namespace.last_analysis is not None :
-      with open(self.__namespace.last_analysis+'.json', 'r') as infile :
-        _last_json = json.load(infile)
-      _last_root = ROOT.TFile(self.__namespace.last_analysis+'.root', 'READ')
+#    if self.__namespace.last_analysis is not None :
+#      with open(self.__namespace.last_analysis+'.json', 'r') as infile :
+#        _last_json = json.load(infile)
+#      _last_root = ROOT.TFile(self.__namespace.last_analysis+'.root', 'READ')
 
-    if namespace.no_cuts :
+
+    if self.__namespace.no_cuts :
       self.__do_cuts = False
 
-    if namespace.no_analysis :
+    if self.__namespace.no_analysis :
       self.__do_analysis = False
 
 
-    for proc in self.__processors :
-      proc.process_args(self.__namespace)
+#    for proc in self.__processors :
+#      proc.process_args(self.__namespace)
 
 
     load_events = None
