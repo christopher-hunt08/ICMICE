@@ -30,9 +30,9 @@ else
   mkdir -p $LOG_DIR
   mkdir -p $CONFIG_DIR
 
-  chmod 765 $CONFIG_DIR
-
   echo $MAUS_INSTALL > $CONFIG_DIR/maus
+
+  chmod -R 765 $CONFIG_DIR
 
   echo "Complete"
   echo
