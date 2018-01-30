@@ -5,6 +5,7 @@
 
 from analysis import tools
 from analysis import hit_types
+from analysis import analysis_track
 
 ####################################################################################################
 def build_event(event_loader) :
@@ -35,13 +36,15 @@ def build_event(event_loader) :
     if track.GetAlgorithmUsed() != tools.HELICAL_ALGORITHM_ID :
       continue
 
-    temp_track = [None for _ in range(16)]
+    trackpoints = [None for _ in range(16)]
 
     for tp in track.scifitrackpoints() :
       plane = tools.calculate_plane_id(1, tp.station(), tp.plane())
       hit = hit_types.AnalysisHit(scifi_track_point=tp)
 
-      temp_track[plane] = hit
+      trackpoints[plane] = hit
+
+    temp_track = analysis_track.AnalysisTrack(trackpoints, chisq=track.chi2(), ndf=track.ndf(), p_value=track.P_value())
 
     if track.tracker() == 0 :
       analysis_event._AnalysisEvent__tracker0_tracks.append(temp_track)

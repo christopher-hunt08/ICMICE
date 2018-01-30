@@ -33,6 +33,9 @@ class Engine(object) :
     self.__do_cuts = True
     self.__do_analysis = True
 
+    self.__cuts = []
+    self.__analyses = []
+
     self.__max_num_events = 0
     self.__event_counter = 0
     self.__event_weight = 0.0
@@ -51,6 +54,10 @@ class Engine(object) :
 
 
 ####################################################################################################
+  def add_cut(self, cut) :
+    self.__cuts.append(cut)
+
+####################################################################################################
   def analyse_event(self) :
     self.__event_counter += 1
 #    set_event_statistical_weight(self.__file_reader.get_current_statistical_weight())
@@ -58,11 +65,20 @@ class Engine(object) :
 
     maus_event = event.build_event(self.__file_reader.get_event)
 
-    maus_event.print_me()
+    is_ok = True
 
     if self.__do_cuts :
-      pass
+      for cut in self.__cuts :
+        cut.fill_histograms(maus_event)
+        if cut.is_cut(maus_event) :
+          is_ok = False
 
+    if is_ok :
+      print "WOOOOOOOOO"
+    else :
+      print "BALLS....."
+
+    maus_event.print_me()
 
     if self.__do_analysis :
       pass
@@ -101,7 +117,7 @@ class Engine(object) :
 
 ####################################################################################################
   def conclude(self) :
-    for proc in self.__processors :
+    for proc in self.__analyses :
       proc.conclude()
 
     if self.__save_good_events :
@@ -129,8 +145,12 @@ class Engine(object) :
     if plot_dict is None :
       plot_dict = {}
 
-    for proc in self.__processors :
-      proc.get_plot_dict(plot_dict)
+    for proc in self.__cuts :
+      name, plots = proc.get_plots()
+      plot_dict[name] = plots
+    for ana in self.__analyses :
+      name, plots = ana.get_plots()
+      plot_dict[name] = plots
 
     return plot_dict
 
@@ -157,8 +177,12 @@ class Engine(object) :
     data_dict['events_analysed'] = self.__event_counter
     data_dict['arguments'] = vars(self.__namespace)
 
-    for proc in self.__processors :
-      proc.get_data_dict(data_dict)
+    for proc in self.__cuts :
+      name, data = proc.get_data()
+      data_dict[name] = data
+    for ana in self.__analyses :
+      name, data = ana.get_data()
+      data_dict[name] = data
 
     return data_dict
 

@@ -26,6 +26,8 @@ import mickey
 
 import ROOT
 
+from mickey import tof_cuts
+from mickey import scifi_cuts
 
 if __name__ == "__main__" : 
   ROOT.gROOT.SetBatch( True )
@@ -36,6 +38,10 @@ if __name__ == "__main__" :
   try :
 
     engine = mickey.Engine('testing_mickey')
+
+    engine.add_cut( tof_cuts.Cut_tof01_spacepoints() )
+    engine.add_cut( tof_cuts.Cut_tof01_time() )
+    engine.add_cut( scifi_cuts.Cut_scifi_upstream_chisq_ndf() )
 
     namespace = engine.process_arguments()
 
@@ -57,9 +63,8 @@ if __name__ == "__main__" :
 
 
         except ValueError as ex:
-          print "An Error Occured. Skipping Spill: " + \
-                str(file_reader.get_current_spill_number()) + \
-                " In File: " + str(file_reader.get_current_filenumber())
+          print
+          print "An Error Occured. Skipping Spill..."
           print "ERROR =", ex
           print
           continue
@@ -75,6 +80,9 @@ if __name__ == "__main__" :
       print "Analysis Failed:", ex
       print
       print "Stopping Execution"
+
+  engine.save_plots()
+  engine.save_data()
 
   print 
   print "Complete."
