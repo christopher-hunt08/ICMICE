@@ -57,11 +57,48 @@ class Engine(object) :
   def add_cut(self, cut) :
     self.__cuts.append(cut)
 
+
+####################################################################################################
+  def go(self, conclude=True, save_plots=True, save_data=True) :
+    """
+      Run through all the events in the file reader, before running the conclusion if required.
+    """
+    try :
+      while self.next_event() :
+        try :
+
+          self.analyse_event()
+
+        except ValueError as ex:
+          print
+          print "An Error Occured. Skipping Spill..."
+          print "ERROR =", ex
+          print
+          continue
+    except KeyboardInterrupt :
+      print
+      print "Keyboard Interrupt"
+      print
+
+    if conclude :
+      try :
+        self.conclude()
+      except ValueError as ex :
+        print "Analysis Failed:", ex
+        print
+        print "Stopping Execution"
+
+    if save_plots :
+      self.save_plots()
+
+    if save_data :
+      self.save_data()
+
+
 ####################################################################################################
   def analyse_event(self) :
     self.__event_counter += 1
 #    set_event_statistical_weight(self.__file_reader.get_current_statistical_weight())
-
 
     maus_event = event.build_event(self.__file_reader.get_event)
 
@@ -73,10 +110,12 @@ class Engine(object) :
         if cut.is_cut(maus_event) :
           is_ok = False
 
-    if is_ok :
-      print "WOOOOOOOOO"
-    else :
-      print "BALLS....."
+    if not is_ok :
+      return
+
+    if self.__save_good_events :
+      self.__file_reader.save_event()
+
 
     maus_event.print_me()
 
@@ -145,12 +184,18 @@ class Engine(object) :
     if plot_dict is None :
       plot_dict = {}
 
+    cut_dict = {}
+    analysis_dict = {}
+
     for proc in self.__cuts :
       name, plots = proc.get_plots()
-      plot_dict[name] = plots
+      cut_dict[name] = plots
     for ana in self.__analyses :
       name, plots = ana.get_plots()
-      plot_dict[name] = plots
+      analysis_dict[name] = plots
+
+    plot_dict["cuts"] = cut_dict
+    plot_dict["analysis"] = analysis_dict
 
     return plot_dict
 
@@ -174,15 +219,21 @@ class Engine(object) :
     if data_dict is None :
       data_dict = {}
 
+    cut_dict = {}
+    analysis_dict = {}
+
     data_dict['events_analysed'] = self.__event_counter
     data_dict['arguments'] = vars(self.__namespace)
 
     for proc in self.__cuts :
       name, data = proc.get_data()
-      data_dict[name] = data
+      cut_dict[name] = data
     for ana in self.__analyses :
       name, data = ana.get_data()
-      data_dict[name] = data
+      analysis_dict[name] = data
+
+    data_dict["cuts"] = cut_dict
+    data_dict["analysis"] = analysis_dict
 
     return data_dict
 
@@ -235,10 +286,7 @@ class Engine(object) :
           events = json.load(infile)
         load_events.update(events)
 
-    self.__good_events_module = self.__namespace.save_good_events
-    if self.__good_events_module is not None :
-      self.__save_good_events = True
-
+    self.__save_good_events = self.__namespace.save_good_events
     self.__output_filename = self.__namespace.output_filename
     self.__output_directory = self.__namespace.output_directory
     self.__mass_assumption = self.__namespace.mass_assumption

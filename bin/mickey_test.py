@@ -42,6 +42,7 @@ if __name__ == "__main__" :
     engine.add_cut( tof_cuts.Cut_tof01_spacepoints() )
     engine.add_cut( tof_cuts.Cut_tof01_time() )
     engine.add_cut( scifi_cuts.Cut_scifi_upstream_chisq_ndf() )
+    engine.add_cut( scifi_cuts.Cut_scifi_upstream_pt() )
 
     namespace = engine.process_arguments()
 
@@ -49,40 +50,10 @@ if __name__ == "__main__" :
     print namespace
     print
 
+    engine.go()
+
   except :
     raise
-  else :
-    print "\nLoading Spills...\n"
-
-    try :
-      while engine.next_event() :
-        try :
-
-
-          engine.analyse_event()
-
-
-        except ValueError as ex:
-          print
-          print "An Error Occured. Skipping Spill..."
-          print "ERROR =", ex
-          print
-          continue
-    except KeyboardInterrupt :
-      print
-      print "Keyboard Interrupt"
-      print
-
-
-    try :
-      engine.conclude()
-    except ValueError as ex :
-      print "Analysis Failed:", ex
-      print
-      print "Stopping Execution"
-
-  engine.save_plots()
-  engine.save_data()
 
   print 
   print "Complete."
