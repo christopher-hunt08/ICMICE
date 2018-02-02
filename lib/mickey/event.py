@@ -8,9 +8,10 @@ from analysis import hit_types
 from analysis import analysis_track
 
 ####################################################################################################
-def build_event(event_loader) :
+def build_event(event_loader, mc_lookup=None) :
   scifi_event = event_loader("scifi")
   tof_event = event_loader("tof")
+  global_event = event_loader("global")
 
   analysis_event = AnalysisEvent()
 
@@ -54,9 +55,39 @@ def build_event(event_loader) :
       raise "WTF!?"
 
 
+  global_tracks = global_event.get_tracks()
+
+  for track in global_tracks :
+    track.SortTrackPointsByZ()
+    trackpoints = []
+
+    for tp in track.GetTrackPoints() :
+      hit = hit_types.AnalysisHit(global_track_point=tp)
+
+      trackpoints.append(hit)
+
+    analysis_event._AnalysisEvent__global_tracks.append( analysis_track.AnalysisTrack(trackpoints) )
+
+
+
+  if mc_lookup is not None :
+    _fill_mc(event_loader("mc"), analysis_event, mc_lookup)
+
   return analysis_event
 
 
+####################################################################################################
+def _fill_mc(mc_event, data_event, mc_lookup) :
+  virtual_hits_count = mc_event.GetVirtualHitsSize()
+
+  for virt_i in range(virtual_hits_count) :
+    virt = mc_event.GetAVirtualHit(virt_i)
+    station = virt.GetStationId()
+
+    if station in mc_lookup :
+      plane_id = mc_lookup[station]
+      hit = hit_types.AnalysisHit(virtual_track_point=virt)
+      data_event._AnalysisEvent__mc_trackpoints[plane_id] = hit
 
 
 ####################################################################################################
@@ -70,6 +101,10 @@ class AnalysisEvent(object) :
     self.__tracker0_tracks = []
     self.__tracker1_tracks = []
 
+    self.__global_tracks = []
+
+    self.__mc_trackpoints = {}
+
     self.__selection_plane = tools.calculate_plane_id( *selection_plane )
     if self.__selection_plane > 0 :
       self.__selection_tracker = self.__tracker1_tracks
@@ -79,6 +114,13 @@ class AnalysisEvent(object) :
 
     self.__upstream_ref = tools.calculate_plane_id( 1, *reference_plane )
     self.__downstream_ref = tools.calculate_plane_id( 1, *reference_plane )
+
+
+    self.__mc_selection_plane = tools.calculate_plane_id( *selection_plane )
+    self.__upstream_mc_ref = tools.calculate_plane_id( 0, *reference_plane )
+    self.__downstream_mc_ref = tools.calculate_plane_id( 1, *reference_plane )
+    for plane in range(-15, 16) :
+      self.__mc_trackpoints[plane] = None
 
 
   def num_tof0_spacepoints(self) :
@@ -139,6 +181,34 @@ class AnalysisEvent(object) :
 
   def downstream_reference_trackpoint(self, track_index=0) :
     return self.__tracker1_tracks[track_index][self.__downstream_ref]
+
+
+
+  def num_global_tracks(self) :
+    return len(self.__global_tracks)
+
+
+  def global_track(self, track_index=0) :
+    return self.__global_tracks[track_index]
+
+
+
+  def mc_trackpoint(self, index) :
+    return self.__mc_trackpoints[index]
+
+
+  def mc_selection_trackpoint(self) :
+    return self.__mc_trackpoints[self.__mc_selection_plane]
+
+
+  def mc_upstream_reference_trackpoint(self) :
+    return self.__mc_trackpoints[self.__upstream_mc_ref]
+
+
+  def mc_downstream_reference_trackpoint(self) :
+    return self.__mc_trackpoints[self.__downstream_mc_ref]
+
+
 
 
   def print_me(self) :

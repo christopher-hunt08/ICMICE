@@ -1,30 +1,16 @@
 
-
 import ROOT
 import argparse
 
+class Analysis_Base(object) :
 
-class Cut_Base(object) :
-
-  def __init__(self, cut_name, require_mc=False) :
-    self.__name = cut_name
-    self.__cut_counter = 0
-    self.__event_counter = 0
+  def __init__(self, analysis_name, require_mc=False) :
+    self.__name = analysis_name
     self.__require_mc = require_mc
 
 
   def require_mc(self) :
     return self.__require_mc
-
-
-  def is_cut(self, analysis_event) :
-    self.__event_counter += 1
-
-    if self._is_cut( analysis_event ) :
-      self.__cut_counter += 1
-      return True
-    else :
-      return False
 
 
   def get_plots(self) :
@@ -37,19 +23,13 @@ class Cut_Base(object) :
 
   def get_data(self) :
     data_dict = {}
-    data_dict["number_events"] = self.__event_counter
-    data_dict["number_cut"] = self.__cut_counter
 
     self._get_data( data_dict )
 
     return self.__name, data_dict
 
 
-  def _is_cut(self, analysis_event) :
-    raise NotImplementedError()
-
-
-  def fill_histograms(self, analysis_event) :
+  def analyse_event(self, analysis_event) :
     raise NotImplementedError()
 
 

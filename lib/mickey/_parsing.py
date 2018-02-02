@@ -22,6 +22,6 @@ def get_engine_parser(parser, job_name="some_analysis") :
   parser.add_argument( '-S', '--save_good_events', action="store_true", help='Save the good events to a json file' )
   parser.add_argument( '--mass_assumption', default=tools.MUON_MASS, type=float, help='Default mass to assume for all tracks' )
   parser.add_argument( '--last_analysis', default=None, help='Base name of the previous analysis run - some modules require this knowledge.' )
-
+  parser.add_argument( '--virtual_plane_lookup', default=None, help="Specify the file with the virtual plane ID lookup" )
 
 

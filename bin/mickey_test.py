@@ -28,6 +28,8 @@ import ROOT
 
 from mickey import tof_cuts
 from mickey import scifi_cuts
+from mickey import diffuser_cut
+from mickey import analysis_modules
 
 if __name__ == "__main__" : 
   ROOT.gROOT.SetBatch( True )
@@ -43,6 +45,10 @@ if __name__ == "__main__" :
     engine.add_cut( tof_cuts.Cut_tof01_time() )
     engine.add_cut( scifi_cuts.Cut_scifi_upstream_chisq_ndf() )
     engine.add_cut( scifi_cuts.Cut_scifi_upstream_pt() )
+    engine.add_cut( diffuser_cut.Cut_diffuser_aperture() )
+
+    engine.add_analysis( analysis_modules.EmittanceAnalysis() )
+#    engine.add_analysis( analysis_modules.MCEmittanceAnalysis() )
 
     namespace = engine.process_arguments()
 

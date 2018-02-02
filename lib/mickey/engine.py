@@ -32,6 +32,8 @@ class Engine(object) :
     self.__save_good_events = False
     self.__do_cuts = True
     self.__do_analysis = True
+    self.__use_mc = False
+    self.__mc_lookup = None
 
     self.__cuts = []
     self.__analyses = []
@@ -55,7 +57,18 @@ class Engine(object) :
 
 ####################################################################################################
   def add_cut(self, cut) :
+    cut.configure_arguments(self.__parser)
+    if cut.require_mc() :
+      self.__use_mc = True
     self.__cuts.append(cut)
+
+
+####################################################################################################
+  def add_analysis(self, analysis) :
+    analysis.configure_arguments(self.__parser)
+    if analysis.require_mc() :
+      self.__use_mc = True
+    self.__analyses.append(analysis)
 
 
 ####################################################################################################
@@ -63,6 +76,11 @@ class Engine(object) :
     """
       Run through all the events in the file reader, before running the conclusion if required.
     """
+
+    if self.__use_mc :
+      if self.__mc_lookup is None :
+        raise ValueError("MC Lookup File not specified")
+
     try :
       while self.next_event() :
         try :
@@ -100,7 +118,10 @@ class Engine(object) :
     self.__event_counter += 1
 #    set_event_statistical_weight(self.__file_reader.get_current_statistical_weight())
 
-    maus_event = event.build_event(self.__file_reader.get_event)
+    if self.__use_mc :
+      maus_event = event.build_event(self.__file_reader.get_event, self.__mc_lookup)
+    else :
+      maus_event = event.build_event(self.__file_reader.get_event)
 
     is_ok = True
 
@@ -117,10 +138,11 @@ class Engine(object) :
       self.__file_reader.save_event()
 
 
-    maus_event.print_me()
+#    maus_event.print_me()
 
     if self.__do_analysis :
-      pass
+      for analysis in self.__analyses :
+        analysis.analyse_event(maus_event)
 
    ## MAGIC GOES HERE 
 
@@ -163,20 +185,6 @@ class Engine(object) :
       filename = os.path.join(self.__output_directory, self.__output_filename)
       with open(filename+'-good_events.json', 'w') as outfile :
         json.dump(self.__file_reader.get_saved_events(), outfile)
-
-
-####################################################################################################
-  def add_processor(self, processor) :
-    for proc in self.__processors :
-      if proc.get_name() == processor.get_name() :
-        return proc
-    else :
-      processor.get_dependencies(self.add_processor)
-      self.__processors.append(processor)
-      proc = self.__processors[-1]
-      proc.set_analysis_name(self.__analysis_name)
-      proc.get_args(self.__parser)
-      return proc
 
 
 ####################################################################################################
@@ -268,14 +276,22 @@ class Engine(object) :
 
     if self.__namespace.no_cuts :
       self.__do_cuts = False
+    else :
+      for cut in self.__cuts :
+        cut.parse_arguments(self.__namespace)
 
     if self.__namespace.no_analysis :
       self.__do_analysis = False
+    else :
+      for analysis in self.__analyses :
+        analysis.parse_arguments(self.__namespace)
 
-
-#    for proc in self.__processors :
-#      proc.process_args(self.__namespace)
-
+    if self.__namespace.virtual_plane_lookup is not None :
+      with open(self.__namespace.virtual_plane_lookup, "r") as infile :
+        temp_dict = json.load(infile)
+      self.__mc_lookup = {}
+      for key, item in temp_dict.iteritems() :
+        self.__mc_lookup[int(key)] = int(item)
 
     load_events = None
     if self.__namespace.selection_file is not None :

@@ -76,7 +76,7 @@ class Cut_tof01_time(Cut_Base) :
 
 
   def configure_arguments(self, parser) :
-    parser.add_argument( "--tof01_cut", nargs=2, type=float, help="Cut Window for TOF01" )
+    parser.add_argument( "--tof01_cut", nargs=2, default=[0.0, 100.0], type=float, help="Cut Window for TOF01" )
 
   def parse_arguments(self, namespace) :
     self.__cut_window = namespace.tof01_cut
