@@ -34,6 +34,7 @@ class Engine(object) :
     self.__do_analysis = True
     self.__use_mc = False
     self.__mc_lookup = None
+    self.__conclude_function = None
 
     self.__cuts = []
     self.__analyses = []
@@ -55,6 +56,11 @@ class Engine(object) :
     return self.__parser
 
 
+####################################################################################################
+  def set_conclude_function(self, function) :
+    self.__conclude_function = function
+
+ 
 ####################################################################################################
   def add_cut(self, cut) :
     cut.configure_arguments(self.__parser)
@@ -81,6 +87,9 @@ class Engine(object) :
       if self.__mc_lookup is None :
         raise ValueError("MC Lookup File not specified")
 
+    print
+    print "Loading and Processing Spills..."
+    print
     try :
       while self.next_event() :
         try :
@@ -89,7 +98,7 @@ class Engine(object) :
 
         except ValueError as ex:
           print
-          print "An Error Occured. Skipping Spill..."
+          print "An Error Occured. Skipping Event..."
           print "ERROR =", ex
           print
           continue
@@ -98,19 +107,19 @@ class Engine(object) :
       print "Keyboard Interrupt"
       print
 
+    print "{0:d} Events Were Processed                                            ".format(self.__file_reader.get_total_num_events())
+    print
+
     if conclude :
       try :
-        self.conclude()
+        print "Performing Post Processing.."
+        print
+        self.conclude(save_plots=True, save_data=True)
       except ValueError as ex :
         print "Analysis Failed:", ex
         print
         print "Stopping Execution"
-
-    if save_plots :
-      self.save_plots()
-
-    if save_data :
-      self.save_data()
+        print
 
 
 ####################################################################################################
@@ -123,16 +132,25 @@ class Engine(object) :
     else :
       maus_event = event.build_event(self.__file_reader.get_event)
 
-    is_ok = True
-
     if self.__do_cuts :
-      for cut in self.__cuts :
-        cut.fill_histograms(maus_event)
-        if cut.is_cut(maus_event) :
-          is_ok = False
+      failed_cuts = 0
+      cut_fail = None
 
-    if not is_ok :
-      return
+      for cut_num, cut in enumerate(self.__cuts) :
+#        cut.fill_histograms(maus_event)
+        if cut.is_cut(maus_event) :
+          failed_cuts += 1
+          cut_fail = cut_num
+
+      if failed_cuts > 1 :
+        return
+      elif failed_cuts == 1 :
+        self.__cuts[cut_fail].fill_histograms(maus_event)
+        return
+      else :
+        for cut in self.__cuts :
+          cut.fill_histograms(maus_event)
+      
 
     if self.__save_good_events :
       self.__file_reader.save_event()
@@ -143,16 +161,6 @@ class Engine(object) :
     if self.__do_analysis :
       for analysis in self.__analyses :
         analysis.analyse_event(maus_event)
-
-   ## MAGIC GOES HERE 
-
-      # Build event
-      # Analyse pre-cuts
-      # Perform cuts
-      # Analyse Post Cuts
-      # Perform Analyses...
-
-
 
 
 
@@ -177,7 +185,7 @@ class Engine(object) :
 
 
 ####################################################################################################
-  def conclude(self) :
+  def conclude(self, save_plots=True, save_data=True) :
     for proc in self.__analyses :
       proc.conclude()
 
@@ -185,6 +193,23 @@ class Engine(object) :
       filename = os.path.join(self.__output_directory, self.__output_filename)
       with open(filename+'-good_events.json', 'w') as outfile :
         json.dump(self.__file_reader.get_saved_events(), outfile)
+
+    plot_dict = self.get_plot_dict()
+    data_dict = self.get_data_dict()
+
+    if self.__conclude_function is not None :
+      self.__conclude_function( plot_dict, data_dict )
+
+    if save_plots :
+      print "Saving Plots"
+      print
+      self._save_plots(plot_dict)
+
+    if save_data :
+      print "Saving Data"
+      print
+      self._save_data(data_dict)
+
 
 
 ####################################################################################################
@@ -210,20 +235,29 @@ class Engine(object) :
 
 ####################################################################################################
   def save_plots(self, outfilename = None, print_plots = False) :
+    plot_dict = self.get_plot_dict()
+    self._save_plots(plot_dict, outfilename, print_plots)
+
+
+####################################################################################################
+  def _save_plots(self, plot_dict=None, outfilename=None, print_plots=False) :
     if outfilename is not None :
       filename = outfilename
     else :
       filename = os.path.join(self.__output_directory, self.__output_filename+".root")
 
-    plot_dict = self.get_plot_dict()
+    if plot_dict is None :
+      plot_dict = self.get_plot_dict()
+
     tools.save_plots(plot_dict, filename)
 
     if print_plots or self.__print_plots :
       tools.print_plots(plot_dict, self.__output_directory)
 
 
+
 ####################################################################################################
-  def get_data_dict(self, data_dict = None) :
+  def get_data_dict(self, data_dict=None) :
     if data_dict is None :
       data_dict = {}
 
@@ -247,14 +281,22 @@ class Engine(object) :
 
 
 ####################################################################################################
-  def save_data(self, outfilename = None) :
+  def save_data(self, outfilename=None) :
+    self._save_data(self.get_data_dict(), outfilename)
+
+
+####################################################################################################
+  def _save_data(self, data_dict=None, outfilename=None) :
     if outfilename is not None :
       filename = outfilename
     else :
       filename = os.path.join(self.__output_directory, self.__output_filename+".json")
 
+    if data_dict is None :
+      data_dict = self.get_data_dict()
+
     with open(filename, 'w') as outfile :
-      json.dump(self.get_data_dict(), outfile)
+      json.dump(data_dict, outfile)
 
 
 ####################################################################################################

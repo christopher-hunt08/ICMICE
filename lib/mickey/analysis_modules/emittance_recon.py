@@ -21,7 +21,7 @@ class EmittanceAnalysis(Analysis_Base) :
     hit = analysis_event.upstream_reference_trackpoint()
     hit.set_weight(weight)
 
-    p = hit.get_p()
+    p = hit.get_pz()
 
     for num, low, high in self.__momentum_windows :
       if p >= low and p < high :
@@ -46,7 +46,7 @@ class EmittanceAnalysis(Analysis_Base) :
 
 
   def configure_arguments(self, parser) :
-    parser.add_argument( "--emittance_momentum_bins", nargs=3, type=float, default=[180.0, 260.0, 8], help="Specify start, end and number of bins" )
+    parser.add_argument( "--emittance_momentum_bins", nargs=3, type=float, default=[175.0, 255.0, 8], help="Specify start, end and number of bins" )
 
 
   def parse_arguments(self, namespace) :
@@ -60,7 +60,7 @@ class EmittanceAnalysis(Analysis_Base) :
 
     for i in range( number ) :
       self.__momentum_windows.append(( i, (start+i*width), (start+(i+1)*width) ))
-      self.__inspectors.append(inspectors.PhaseSpace2DInspector(i, 0))
+      self.__inspectors.append(inspectors.PhaseSpace2DInspector(i, 2000))
 
 
   def conclude(self) :

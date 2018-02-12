@@ -7,10 +7,10 @@ import math
 import array
 
 
-class MCEmittanceAnalysis(Analysis_Base) :
+class EmittanceSystematicErrors(Analysis_Base) :
 
   def __init__(self) :
-    Analysis_Base.__init__(self, "mc_upstream_emittance_reconstruction", require_mc=True)
+    Analysis_Base.__init__(self, "mc_emittance_systematic_error_calculation", require_mc=True)
 
     self.__inspectors = []
     self.__momentum_windows = [ (0, 0.0, 300.0) ]
@@ -66,7 +66,7 @@ class MCEmittanceAnalysis(Analysis_Base) :
 
     for i in range( number ) :
       self.__momentum_windows.append(( i, (start+i*width), (start+(i+1)*width) ))
-      self.__inspectors.append(inspectors.PhaseSpace2DInspector(i, 2000))
+      self.__inspectors.append(inspectors.EmittanceSystematicErrorInspector(i, 2000))
 
 
   def conclude(self) :
@@ -79,10 +79,11 @@ class MCEmittanceAnalysis(Analysis_Base) :
     for num, low, high in self.__momentum_windows :
       p.append( 0.5*(high+low) )
       p_error.append( 0.5*(high-low) )
-      em = self.__inspectors[num].covariance.get_emittance()
+      em = self.__inspectors[num].get_systematic_error()
       emittance.append(em)
       zeros.append(0.0)
 
     self.__emittance_graph = ROOT.TGraphErrors(len(p), p, emittance, p_error, zeros)
+
 
 
