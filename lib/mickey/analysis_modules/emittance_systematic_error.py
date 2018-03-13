@@ -14,12 +14,16 @@ class EmittanceSystematicErrors(Analysis_Base) :
 
     self.__inspectors = []
     self.__momentum_windows = [ (0, 0.0, 300.0) ]
-    self.__emittance_graph = None
+    self.__bias_graph = None
+    self.__error_graph = None
+    self.__bias_values = []
+    self.__error_values = []
 
 
   def analyse_event(self, analysis_event, weight=1.0) :
-    hit = analysis_event.mc_upstream_reference_trackpoint()
-    if hit is None :
+    hit = analysis_event.upstream_reference_trackpoint()
+    vhit = analysis_event.mc_upstream_reference_trackpoint()
+    if vhit is None :
       print
       print "Expected Virtual Hit - Found Nothing!"
       print
@@ -31,7 +35,7 @@ class EmittanceSystematicErrors(Analysis_Base) :
 
     for num, low, high in self.__momentum_windows :
       if p >= low and p < high :
-        self.__inspectors[num].add_hit(hit)
+        self.__inspectors[num].add_hit(hit, vhit)
 
 
   def _get_plots(self, plot_dict) :
@@ -39,7 +43,8 @@ class EmittanceSystematicErrors(Analysis_Base) :
       name = "bin_{0:d}".format(num)
       plot_dict[name] = self.__inspectors[num].get_plot_dictionary()
 
-    plot_dict["emittance"] = self.__emittance_graph
+    plot_dict["emittance_bias"] = self.__bias_graph
+    plot_dict["emittance_systematic"] = self.__error_graph
 
 
   def _get_data(self, data_dict) :
@@ -49,6 +54,11 @@ class EmittanceSystematicErrors(Analysis_Base) :
 
       data_dict[name]['low_edge'] = low
       data_dict[name]['high_edge'] = high
+      data_dict[name]['bias'] = self.__bias_values[num][0]
+      data_dict[name]['bias_error'] = self.__bias_values[num][1]
+      data_dict[name]['error'] = self.__error_values[num][0]
+      data_dict[name]['error_low'] = self.__error_values[num][1]
+      data_dict[name]['error_high'] = self.__error_values[num][2]
 
 
   def configure_arguments(self, parser) :
@@ -73,17 +83,36 @@ class EmittanceSystematicErrors(Analysis_Base) :
 
     p = array.array("d")
     p_error = array.array("d")
-    emittance = array.array("d")
+    bias = array.array("d")
+    bias_err_low = array.array("d")
+    bias_err_high = array.array("d")
+    sys = array.array("d")
+    sys_err_low = array.array("d")
+    sys_err_high = array.array("d")
     zeros = array.array("d")
+
+    self.__bias_values = []
+    self.__error_values = []
 
     for num, low, high in self.__momentum_windows :
       p.append( 0.5*(high+low) )
       p_error.append( 0.5*(high-low) )
-      em = self.__inspectors[num].get_systematic_error()
-      emittance.append(em)
+
+      b, bias_lower, bias_upper, s, sys_lower, sys_upper = self.__inspectors[num].get_systematic_error()
+
+      bias.append(b)
+      bias_err_low.append(b-bias_lower)
+      bias_err_high.append(bias_upper-b)
+      sys.append(s)
+      sys_err_low.append(s-sys_lower)
+      sys_err_high.append(sys_upper-s)
       zeros.append(0.0)
 
-    self.__emittance_graph = ROOT.TGraphErrors(len(p), p, emittance, p_error, zeros)
+      self.__bias_values.append((b, bias_upper-bias_lower))
+      self.__error_values.append((s, sys_lower, sys_upper))
+
+    self.__bias_graph = ROOT.TGraphAsymmErrors(len(p), p, bias, p_error, p_error, bias_err_low, bias_err_high)
+    self.__error_graph = ROOT.TGraphAsymmErrors(len(p), p, sys, p_error, p_error, sys_err_low, sys_err_high)
 
 
 
