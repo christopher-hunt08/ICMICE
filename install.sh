@@ -32,7 +32,7 @@ else
 
   echo $MAUS_INSTALL > $CONFIG_DIR/maus
 
-  chmod -R 765 $CONFIG_DIR
+  chmod -R 755 $CONFIG_DIR
   chmod -R 777 $LOG_DIR
 
   echo "Complete"
