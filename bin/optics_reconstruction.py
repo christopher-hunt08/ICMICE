@@ -15,6 +15,7 @@ from mickey import tof_cuts
 from mickey import scifi_cuts
 from mickey import diffuser_cut
 from mickey import banana_cut
+from mickey import scifi_momentum_cut
 from mickey import analysis_modules
 
 
@@ -32,6 +33,7 @@ if __name__ == "__main__" :
     engine.add_cut( scifi_cuts.Cut_scifi_upstream_chisq_ndf() )
     engine.add_cut( scifi_cuts.Cut_scifi_upstream_pt() )
     engine.add_cut( banana_cut.Cut_banana_plot_mass() )
+    engine.add_cut( scifi_momentum_cut.Cut_scifi_upstream_momentum() )
 #    engine.add_cut( diffuser_cut.Cut_diffuser_aperture() )
 
     engine.add_analysis( analysis_modules.OpticsAnalysis() )
