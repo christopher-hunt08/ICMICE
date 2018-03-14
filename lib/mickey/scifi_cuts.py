@@ -38,7 +38,7 @@ class Cut_scifi_upstream_chisq_ndf(Cut_Base) :
 
 
   def configure_arguments(self, parser) :
-    parser.add_argument( "--upstream_chisq_ndf_cut", default=4.0, type=float, help="Cut on upstream chisq per degree of freedom" )
+    parser.add_argument( "--upstream_chisq_ndf_cut", default=100.0, type=float, help="Cut on upstream chisq per degree of freedom" )
 
 
   def parse_arguments(self, namespace) :
@@ -79,7 +79,7 @@ class Cut_scifi_upstream_pt(Cut_Base) :
 
 
   def configure_arguments(self, parser) :
-    parser.add_argument( "--upstream_pt_cut", default=180.0, type=float, help="Cut on upstream transverse momentum" )
+    parser.add_argument( "--upstream_pt_cut", default=10000.0, type=float, help="Cut on upstream transverse momentum" )
 
 
   def parse_arguments(self, namespace) :

@@ -186,8 +186,9 @@ class Engine(object) :
 
 ####################################################################################################
   def conclude(self, save_plots=True, save_data=True) :
-    for proc in self.__analyses :
-      proc.conclude()
+    if self.__do_analysis :
+      for proc in self.__analyses :
+        proc.conclude()
 
     if self.__save_good_events :
       filename = os.path.join(self.__output_directory, self.__output_filename)
@@ -220,12 +221,14 @@ class Engine(object) :
     cut_dict = {}
     analysis_dict = {}
 
-    for proc in self.__cuts :
-      name, plots = proc.get_plots()
-      cut_dict[name] = plots
-    for ana in self.__analyses :
-      name, plots = ana.get_plots()
-      analysis_dict[name] = plots
+    if self.__do_cuts :
+      for proc in self.__cuts :
+        name, plots = proc.get_plots()
+        cut_dict[name] = plots
+    if self.__do_analysis :
+      for ana in self.__analyses :
+        name, plots = ana.get_plots()
+        analysis_dict[name] = plots
 
     plot_dict["cuts"] = cut_dict
     plot_dict["analysis"] = analysis_dict
@@ -267,12 +270,14 @@ class Engine(object) :
     data_dict['events_analysed'] = self.__event_counter
     data_dict['arguments'] = vars(self.__namespace)
 
-    for proc in self.__cuts :
-      name, data = proc.get_data()
-      cut_dict[name] = data
-    for ana in self.__analyses :
-      name, data = ana.get_data()
-      analysis_dict[name] = data
+    if self.__do_cuts :
+      for proc in self.__cuts :
+        name, data = proc.get_data()
+        cut_dict[name] = data
+    if self.__do_analysis :
+      for ana in self.__analyses :
+        name, data = ana.get_data()
+        analysis_dict[name] = data
 
     data_dict["cuts"] = cut_dict
     data_dict["analysis"] = analysis_dict

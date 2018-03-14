@@ -108,7 +108,7 @@ class EmittanceSystematicErrors(Analysis_Base) :
       sys_err_high.append(sys_upper-s)
       zeros.append(0.0)
 
-      self.__bias_values.append((b, bias_upper-bias_lower))
+      self.__bias_values.append((b, 0.5*(bias_upper-bias_lower)))
       self.__error_values.append((s, sys_lower, sys_upper))
 
     self.__bias_graph = ROOT.TGraphAsymmErrors(len(p), p, bias, p_error, p_error, bias_err_low, bias_err_high)

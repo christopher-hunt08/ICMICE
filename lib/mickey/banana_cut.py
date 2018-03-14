@@ -17,6 +17,9 @@ class Cut_banana_plot_mass(Cut_Base) :
 
 
   def _is_cut(self, analysis_event) :
+    if self.__momentum_range is None :
+      return False
+
     if analysis_event.num_upstream_tracks() == 0 :
       return True
 
@@ -53,7 +56,7 @@ class Cut_banana_plot_mass(Cut_Base) :
 
 
   def configure_arguments(self, parser) :
-    parser.add_argument( "--banana_plot_mass_cut", default=[-2.0, 42.0], nargs=2, type=float, help="Cut on the banana plot using a momentum range." )
+    parser.add_argument( "--banana_plot_mass_cut", default=None, nargs=2, type=float, help="Cut on the banana plot using a momentum range." )
 
 
   def parse_arguments(self, namespace) :
