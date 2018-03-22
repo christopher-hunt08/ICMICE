@@ -25,7 +25,7 @@ if __name__ == "__main__" :
 
   try :
 
-    engine = mickey.Engine('emittance_reconstruction')
+    engine = mickey.Engine('emittance_official_systematic_error')
 
     engine.add_cut( tof_cuts.Cut_tof01_spacepoints() )
     engine.add_cut( tof_cuts.Cut_tof01_time() )
@@ -33,9 +33,8 @@ if __name__ == "__main__" :
     engine.add_cut( scifi_cuts.Cut_scifi_upstream_pt() )
     engine.add_cut( banana_cut.Cut_banana_plot_mass() )
     engine.add_cut( scifi_cuts.Cut_scifi_refit_status() )
-    engine.add_cut( diffuser_cut.Cut_diffuser_aperture() )
 
-    engine.add_analysis( analysis_modules.EmittanceAnalysis() )
+    engine.add_analysis( analysis_modules.EmittanceSystematicErrors() )
 
     namespace = engine.process_arguments()
 

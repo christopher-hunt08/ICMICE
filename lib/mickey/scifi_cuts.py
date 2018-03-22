@@ -86,8 +86,55 @@ class Cut_scifi_upstream_pt(Cut_Base) :
     self.__pt_cut = namespace.upstream_pt_cut
 
 
-# pz
-# p
-# pt
-# radius
+####################################################################################################
+class Cut_scifi_refit_status(Cut_Base) :
+
+  def __init__(self) :
+    Cut_Base.__init__(self, "scifi_refit_status")
+    self.__cut_refits = False
+    self.__histogram_upstream = ROOT.TH1F( "upstream_refit_status", ";Status;# Muons", 5, -0.5, 4.5 )
+    self.__histogram_downstream = ROOT.TH1F( "downstream_refit_status", ";Status;# Muons", 5, -0.5, 4.5 )
+
+
+  def _is_cut(self, analysis_event) :
+    if not self.__cut_refits :
+      return False
+
+    if analysis_event.num_upstream_tracks() > 0 :
+      if analysis_event.upstream_track().get_status() > 0 :
+        return True
+
+    if analysis_event.num_downstream_tracks() > 0 :
+      if analysis_event.downstream_track().get_status() > 0 :
+        return True
+
+    else :
+      return False
+
+
+  def fill_histograms(self, analysis_event) :
+    if analysis_event.num_upstream_tracks() > 0 :
+      self.__histogram_upstream.Fill( analysis_event.upstream_track().get_status() )
+    if analysis_event.num_downstream_tracks() > 0 :
+      self.__histogram_downstream.Fill( analysis_event.downstream_track().get_status() )
+
+
+  def _get_plots(self, plot_dict) :
+    plot_dict["refit_status_upstream"] = self.__histogram_upstream
+    plot_dict["refit_status_downstream"] = self.__histogram_downstream
+
+
+  def _get_data(self, data_dict) :
+    pass
+
+
+  def configure_arguments(self, parser) :
+    parser.add_argument( "--scifi_refit_cut", action="store_true", help="Throw tracks that have been refitted by some means." )
+
+
+  def parse_arguments(self, namespace) :
+    self.__cut_refits = namespace.scifi_refit_cut
+
+
+
 

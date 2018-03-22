@@ -31,7 +31,7 @@ class EmittanceSystematicErrors(Analysis_Base) :
 
     hit.set_weight(weight)
 
-    p = hit.get_pz()
+    p = hit.get_p()
 
     for num, low, high in self.__momentum_windows :
       if p >= low and p < high :

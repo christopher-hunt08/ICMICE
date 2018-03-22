@@ -45,7 +45,7 @@ def build_event(event_loader, mc_lookup=None) :
 
       trackpoints[plane] = hit
 
-    temp_track = analysis_track.AnalysisTrack(trackpoints, chisq=track.chi2(), ndf=track.ndf(), p_value=track.P_value())
+    temp_track = analysis_track.AnalysisTrack(trackpoints, chisq=track.chi2(), ndf=track.ndf(), p_value=track.P_value(), status=track.GetWasRefit())
 
     if track.tracker() == 0 :
       analysis_event._AnalysisEvent__tracker0_tracks.append(temp_track)

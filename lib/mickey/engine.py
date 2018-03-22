@@ -42,6 +42,7 @@ class Engine(object) :
     self.__max_num_events = 0
     self.__event_counter = 0
     self.__event_weight = 0.0
+    self.__analysed_event_counter = 0
 
     self.__output_directory = None
     self.__output_filename = None
@@ -155,6 +156,7 @@ class Engine(object) :
     if self.__save_good_events :
       self.__file_reader.save_event()
 
+    self.__analysed_event_counter += 1
 
 #    maus_event.print_me()
 
@@ -267,7 +269,8 @@ class Engine(object) :
     cut_dict = {}
     analysis_dict = {}
 
-    data_dict['events_analysed'] = self.__event_counter
+    data_dict['events_processed'] = self.__event_counter
+    data_dict['events_analysed'] = self.__analysed_event_counter
     data_dict['arguments'] = vars(self.__namespace)
 
     if self.__do_cuts :

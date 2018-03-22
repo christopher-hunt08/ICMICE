@@ -13,7 +13,7 @@ class Cut_diffuser_aperture(Cut_Base) :
 
     self.__histogram = ROOT.TH1F( "cut_diffuser_radius", ";r  [mm];# Events", 400, 0.0, 200.0 )
     self.__z_position = 13740.0
-    self.__radius_cut = 80.0
+    self.__radius_cut = 90.0
     self.__tolerance = 1.0
 
 

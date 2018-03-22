@@ -12,8 +12,9 @@ class Cut_banana_plot_mass(Cut_Base) :
   def __init__(self) :
     Cut_Base.__init__(self, "banana_plot_mass")
     self.__histogram = ROOT.TH2F( "banana_plot", ";p  [MeV/c];TOF  [ns]", 200, 100.0, 300.0, 200, 20.0, 40.0 )
+    self.__momentum_histogram = ROOT.TH1F( "banana_momentum", "#Delta p  [MeV/c];# Muons", 400, -200.0, 200.0 )
     self.__mass_hypothesis = -1.0
-    self.__momentum_range = 5.0
+    self.__momentum_range = None
 
 
   def _is_cut(self, analysis_event) :
@@ -44,11 +45,23 @@ class Cut_banana_plot_mass(Cut_Base) :
 
   def fill_histograms(self, analysis_event) :
     if analysis_event.num_upstream_tracks() >= 0 and analysis_event.num_tof1_spacepoints() >= 0 or analysis_event.num_tof0_spacepoints() >= 0 :
-      self.__histogram.Fill( analysis_event.upstream_reference_trackpoint().get_p(), analysis_event.tof01() )
+
+      p = analysis_event.upstream_reference_trackpoint().get_p()
+      T = analysis_event.tof01()
+      L = analysis_event.tof1_spacepoint().get_z() - analysis_event.tof0_spacepoint().get_z()
+      b = L/(T*300.0)
+
+      self.__histogram.Fill( p, T )
+
+      if b > 1.0 : # Ruddy relativistic electrons!
+        self.__momentum_histogram.Fill( 1.0e300 )
+      else :
+        self.__momentum_histogram.Fill( self.__mass_hypothesis / math.sqrt((1.0/(b*b)) - 1 ) - p )
 
 
   def _get_plots(self, plot_dict) :
     plot_dict["banana_plot"] = self.__histogram
+    plot_dict["momentum_histogram"] = self.__momentum_histogram
 
 
   def _get_data(self, data_dict) :
