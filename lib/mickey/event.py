@@ -55,18 +55,21 @@ def build_event(event_loader, mc_lookup=None) :
       raise "WTF!?"
 
 
-  global_tracks = global_event.get_tracks()
-
-  for track in global_tracks :
-    track.SortTrackPointsByZ()
+  global_chains = global_event.get_primary_chains()
+  for chain in global_chains :
+    chain_type = chain.get_chain_type()
+    global_tracks = chain.GetMatchedTracks()
     trackpoints = []
 
-    for tp in track.GetTrackPoints() :
-      hit = hit_types.AnalysisHit(global_track_point=tp)
+    for track in global_tracks :
+#      track.SortTrackPointsByZ()
 
-      trackpoints.append(hit)
+      for tp in track.GetTrackPoints() :
+        hit = hit_types.AnalysisHit(global_track_point=tp)
 
-    analysis_event._AnalysisEvent__global_tracks.append( analysis_track.AnalysisTrack(trackpoints) )
+        trackpoints.append(hit)
+
+    analysis_event._AnalysisEvent__global_tracks.append( analysis_track.AnalysisTrack(trackpoints, status=int(chain_type)) )
 
 
 

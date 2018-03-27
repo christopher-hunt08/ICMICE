@@ -21,7 +21,7 @@ class EmittanceAnalysis(Analysis_Base) :
     hit = analysis_event.upstream_reference_trackpoint()
     hit.set_weight(weight)
 
-    p = hit.get_pz()
+    p = hit.get_p()
 
     for num, low, high in self.__momentum_windows :
       if p >= low and p < high :

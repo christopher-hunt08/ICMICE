@@ -15,23 +15,34 @@ class Cut_diffuser_aperture(Cut_Base) :
     self.__z_position = 13740.0
     self.__radius_cut = 90.0
     self.__tolerance = 1.0
+    self.__missing_global_tracks = 0
+    self.__missing_virtual_planes = 0
 
 
   def _is_cut(self, analysis_event) :
     if analysis_event.num_global_tracks() == 0 :
-      raise ValueError("No Global Track Was found")
+      self.__missing_global_tracks += 1
+      return True
+#      raise ValueError("No Global Track Was found")
 
-    global_track = analysis_event.global_track()
-    for i in range(len(global_track)) :
-      tp = global_track[i]
+    for track_i in range(analysis_event.num_global_tracks()) :
+      global_track = analysis_event.global_track(track_i)
+      if global_track.get_status() != 1 and global_track.get_status() != 3 :
+        continue
 
-      if math.fabs( tp.get_z() - self.__z_position ) < self.__tolerance :
-        if tp.get_radius() < self.__radius_cut :
-          return False
-        else :
-          return True
+      for i in range(len(global_track)) :
+        tp = global_track[i]
 
-    raise ValueError("No virtual plane was located near the diffuser")
+        if math.fabs( tp.get_z() - self.__z_position ) < self.__tolerance :
+          if tp.get_r() < self.__radius_cut :
+            return False
+          else :
+            return True
+#      break # Only try one track
+
+    self.__missing_virtual_planes += 1
+    return True
+#    raise ValueError("No virtual plane was located near the diffuser")
 
 
   def fill_histograms(self, analysis_event) :
@@ -42,7 +53,7 @@ class Cut_diffuser_aperture(Cut_Base) :
     for i in range(len(global_track)) :
       tp = global_track[i]
       if math.fabs( tp.get_z() - self.__z_position ) < self.__tolerance :
-        self.__histogram.Fill( tp.get_radius() )
+        self.__histogram.Fill( tp.get_r() )
         return
 
     self.__histogram.Fill(-1.0)
@@ -53,7 +64,8 @@ class Cut_diffuser_aperture(Cut_Base) :
 
 
   def _get_data(self, data_dict) :
-    pass
+    data_dict['missing_virtual_planes'] = self.__missing_virtual_planes
+    data_dict['missing_global_tracks'] = self.__missing_global_tracks
 
 
   def configure_arguments(self, parser) :
