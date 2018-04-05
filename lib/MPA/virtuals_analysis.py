@@ -555,7 +555,7 @@ class virtual_beam_properties(framework.processor_base) :
       am.append(self.__primaries.inspector.covariance.get_angular_momentum())
 #      conam.append(self.__primaries.inspector.covariance.get_canonical_angular_momentum(datum.get_mean_field()[2]))
       number.append(self.__primaries.inspector.covariance.length())
-      number.append(self.__primaries.brightness/self.__primaries.inspector.covariance.length())
+      brightness.append(self.__primaries.brightness/self.__primaries.inspector.covariance.length())
 #      number.append(self.__primaries.brightness)
 
 
