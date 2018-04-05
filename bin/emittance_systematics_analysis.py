@@ -11,11 +11,8 @@ import ROOT
 import array
 
 import mickey
-from mickey import tof_cuts
-from mickey import scifi_cuts
-from mickey import diffuser_cut
-from mickey import banana_cut
 from mickey import analysis_modules
+from mickey import cuts_modules
 
 
 
@@ -27,8 +24,8 @@ if __name__ == "__main__" :
 
     engine = mickey.Engine('emittance_systematic_error')
 
-    engine.add_cut( scifi_cuts.Cut_scifi_upstream_chisq_ndf() )
-    engine.add_cut( scifi_cuts.Cut_scifi_upstream_pt() )
+    engine.add_cut( cuts_modules.SciFiUpstreamChisqNDF() )
+    engine.add_cut( cuts_modules.SciFiUpstreamPt() )
 
     engine.add_analysis( analysis_modules.EmittanceSystematicErrors() )
 

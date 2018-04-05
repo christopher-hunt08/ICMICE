@@ -4,7 +4,7 @@ from _cuts_base import Cut_Base
 
 # chisq ndf
 ####################################################################################################
-class Cut_scifi_upstream_momentum(Cut_Base) :
+class SciFiUpstreamMomentum(Cut_Base) :
 
   def __init__(self) :
     Cut_Base.__init__(self, "upstream_scifi_momentum")

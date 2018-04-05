@@ -5,7 +5,7 @@ from _cuts_base import Cut_Base
 
 # chisq ndf
 ####################################################################################################
-class Cut_scifi_upstream_chisq_ndf(Cut_Base) :
+class SciFiUpstreamChisqNDF(Cut_Base) :
 
   def __init__(self) :
     Cut_Base.__init__(self, "upstream_scifi_chisqndf")
@@ -46,7 +46,7 @@ class Cut_scifi_upstream_chisq_ndf(Cut_Base) :
 
 
 ####################################################################################################
-class Cut_scifi_upstream_pt(Cut_Base) :
+class SciFiUpstreamPt(Cut_Base) :
 
   def __init__(self) :
     Cut_Base.__init__(self, "upstream_scifi_pt")
@@ -87,7 +87,7 @@ class Cut_scifi_upstream_pt(Cut_Base) :
 
 
 ####################################################################################################
-class Cut_scifi_refit_status(Cut_Base) :
+class SciFiRefitStatus(Cut_Base) :
 
   def __init__(self) :
     Cut_Base.__init__(self, "scifi_refit_status")

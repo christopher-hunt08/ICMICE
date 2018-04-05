@@ -6,7 +6,7 @@ from _cuts_base import Cut_Base
 
 
 ####################################################################################################
-class Cut_diffuser_aperture(Cut_Base) :
+class DiffuserAperture(Cut_Base) :
 
   def __init__(self) :
     Cut_Base.__init__(self, "diffuser_aperture")
@@ -60,7 +60,7 @@ class Cut_diffuser_aperture(Cut_Base) :
 
 
   def _get_plots(self, plot_dict) :
-    plot_dict["tof01_number_spacepoints"] = self.__histogram
+    plot_dict["projected_diffuser_radius"] = self.__histogram
 
 
   def _get_data(self, data_dict) :

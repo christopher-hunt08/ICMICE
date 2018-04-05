@@ -4,7 +4,7 @@ from _cuts_base import Cut_Base
 
 
 ####################################################################################################
-class Cut_tof01_spacepoints(Cut_Base) :
+class TOF01Spacepoints(Cut_Base) :
 
   def __init__(self) :
     Cut_Base.__init__(self, "tof01_spacepoints")
@@ -39,7 +39,7 @@ class Cut_tof01_spacepoints(Cut_Base) :
 
 
 ####################################################################################################
-class Cut_tof01_time(Cut_Base) :
+class TOF01Time(Cut_Base) :
 
   def __init__(self) :
     Cut_Base.__init__(self, "tof01_time")

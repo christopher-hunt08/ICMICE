@@ -7,7 +7,7 @@ from _cuts_base import Cut_Base
 from analysis import tools
 
 ####################################################################################################
-class Cut_banana_plot_mass(Cut_Base) :
+class BananaPlot(Cut_Base) :
 
   def __init__(self) :
     Cut_Base.__init__(self, "banana_plot_mass")
