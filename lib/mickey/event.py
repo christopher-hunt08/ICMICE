@@ -7,11 +7,19 @@ from analysis import tools
 from analysis import hit_types
 from analysis import analysis_track
 
+
+####################################################################################################
+CURRENT_MC_LOOKUP = None
+
+
 ####################################################################################################
 def build_event(event_loader, mc_lookup=None) :
   scifi_event = event_loader("scifi")
   tof_event = event_loader("tof")
   global_event = event_loader("global")
+
+  global CURRENT_MC_LOOKUP
+  CURRENT_MC_LOOKUP = mc_lookup
 
   analysis_event = AnalysisEvent()
 
@@ -73,8 +81,9 @@ def build_event(event_loader, mc_lookup=None) :
 
 
 
-  if mc_lookup is not None :
-    _fill_mc(event_loader("mc"), analysis_event, mc_lookup)
+  if CURRENT_MC_LOOKUP is not None :
+#    _fill_mc(event_loader("mc"), analysis_event, mc_lookup)
+    _fill_virt(event_loader("mc"), analysis_event)
 
   return analysis_event
 
@@ -91,6 +100,19 @@ def _fill_mc(mc_event, data_event, mc_lookup) :
       plane_id = mc_lookup[station]
       hit = hit_types.AnalysisHit(virtual_track_point=virt)
       data_event._AnalysisEvent__mc_trackpoints[plane_id] = hit
+
+
+####################################################################################################
+def _fill_virt(mc_event, data_event) :
+  virtual_hits_count = mc_event.GetVirtualHitsSize()
+
+  for virt_i in range(virtual_hits_count) :
+    virt = mc_event.GetAVirtualHit(virt_i)
+
+    if virt.GetTrackId() == 1 : # The primary particle only
+      station = virt.GetStationId()
+      hit = hit_types.AnalysisHit(virtual_track_point=virt)
+      data_event._AnalysisEvent__mc_trackpoints[station] = hit
 
 
 ####################################################################################################
@@ -118,12 +140,14 @@ class AnalysisEvent(object) :
     self.__upstream_ref = tools.calculate_plane_id( 1, *reference_plane )
     self.__downstream_ref = tools.calculate_plane_id( 1, *reference_plane )
 
-
-    self.__mc_selection_plane = tools.calculate_plane_id( *selection_plane )
-    self.__upstream_mc_ref = tools.calculate_plane_id( 0, *reference_plane )
-    self.__downstream_mc_ref = tools.calculate_plane_id( 1, *reference_plane )
-    for plane in range(-15, 16) :
-      self.__mc_trackpoints[plane] = None
+    if CURRENT_MC_LOOKUP is not None :
+      self.__mc_selection_plane = CURRENT_MC_LOOKUP[tools.calculate_plane_id( *selection_plane )]
+      self.__upstream_mc_ref = CURRENT_MC_LOOKUP[tools.calculate_plane_id( 0, *reference_plane )]
+      self.__downstream_mc_ref = CURRENT_MC_LOOKUP[tools.calculate_plane_id( 1, *reference_plane )]
+    else :
+      self.__mc_selection_plane = 0
+      self.__upstream_mc_ref = 0
+      self.__downstream_mc_ref = 0
 
 
   def num_tof0_spacepoints(self) :
@@ -197,19 +221,33 @@ class AnalysisEvent(object) :
 
 
   def mc_trackpoint(self, index) :
-    return self.__mc_trackpoints[index]
+    plane_id = CURRENT_MC_LOOKUP[index]
+    return self.__mc_trackpoints[plane_id]
+
+
+  def mc_virtual_hit(self, plane_id) :
+    return self.__mc_trackpoints[plane_id]
 
 
   def mc_selection_trackpoint(self) :
-    return self.__mc_trackpoints[self.__mc_selection_plane]
+    if self.__mc_selection_plane in self.__mc_trackpoints :
+      return self.__mc_trackpoints[self.__upstream_mc_ref]
+    else :
+      return None
 
 
   def mc_upstream_reference_trackpoint(self) :
-    return self.__mc_trackpoints[self.__upstream_mc_ref]
+    if self.__upstream_mc_ref in self.__mc_trackpoints :
+      return self.__mc_trackpoints[self.__upstream_mc_ref]
+    else :
+      return None
 
 
   def mc_downstream_reference_trackpoint(self) :
-    return self.__mc_trackpoints[self.__downstream_mc_ref]
+    if self.__downstream_mc_ref in self.__mc_trackpoints :
+      return self.__mc_trackpoints[self.__downstream_mc_ref]
+    else :
+      return None
 
 
 

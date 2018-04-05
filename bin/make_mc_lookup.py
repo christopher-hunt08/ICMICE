@@ -105,6 +105,15 @@ def inverse_virtual_plane_dict(virtual_plane_dict) :
   return inverse_dict
 
 
+def trim_virtual_plane_dict(virtual_plane_dict) :
+  """
+    Create the inverse lookup.
+  """
+  new_dict = {}
+  for station, plane in virtual_plane_dict.iteritems() :
+    new_dict[station] = plane[0]
+
+  return new_dict
 
 
 
@@ -136,7 +145,8 @@ if __name__ == "__main__" :
     print
 #    virtual_plane_dict = find_virtual_planes(file_reader, namespace.max_num_events)
     virtual_plane_dict, scifi_virtual_dict = create_virtual_plane_dict(file_reader, namespace.max_num_events)
-    scifi_virtual_dict = inverse_virtual_plane_dict(scifi_virtual_dict)
+#    scifi_virtual_dict = inverse_virtual_plane_dict(scifi_virtual_dict)
+    scifi_virtual_dict = trim_virtual_plane_dict(scifi_virtual_dict)
 
     outfile = os.path.join(namespace.output_directory, namespace.output_filename) + '.json'
     with open(outfile, 'w') as output :
