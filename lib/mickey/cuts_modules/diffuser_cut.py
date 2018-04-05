@@ -15,11 +15,15 @@ class DiffuserAperture(Cut_Base) :
     self.__z_position = 13740.0
     self.__radius_cut = 90.0
     self.__tolerance = 1.0
+    self.__do_cut = False
     self.__missing_global_tracks = 0
     self.__missing_virtual_planes = 0
 
 
   def _is_cut(self, analysis_event) :
+    if not self.__do_cut :
+      return False
+
     if analysis_event.num_global_tracks() == 0 :
       self.__missing_global_tracks += 1
       return True
@@ -70,12 +74,15 @@ class DiffuserAperture(Cut_Base) :
 
   def configure_arguments(self, parser) :
     parser.add_argument('--diffuser_position', type=float, default=self.__z_position, help='z-Position of diffuser')
-    parser.add_argument('--diffuser_radius_cut', type=float, default=self.__radius_cut, help='Radius to cut tracks')
+    parser.add_argument('--diffuser_radius_cut', type=float, default=None, help='Radius to cut tracks')
 
 
   def parse_arguments(self, namespace) :
     self.__z_position = namespace.diffuser_position
     self.__radius_cut = namespace.diffuser_radius_cut
+
+    if self.__radius_cut is None :
+      self.__do_cut = False
     
 
 
