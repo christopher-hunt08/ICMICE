@@ -136,5 +136,52 @@ class SciFiRefitStatus(Cut_Base) :
     self.__cut_refits = namespace.scifi_refit_cut
 
 
+####################################################################################################
+class SciFiTransmission(Cut_Base) :
+
+  def __init__(self) :
+    Cut_Base.__init__(self, "scifi_transmission_cut")
+    self.__histogram = ROOT.TH2F( "scifi_track_numbers", ";# Upstream Tracks;# Downstream Tracks", 5, -0.5, 4.5, 5, -0.5, 4.5 )
+    self.__do_cut = False
+
+
+  def _is_cut(self, analysis_event) :
+    if not self.__do_cut :
+      return False
+
+    ups = analysis_event.num_upstream_tracks()
+    downs = analysis_event.num_downstream_tracks()
+
+    if ups == 1 and downs == 1 : 
+      return False
+    else :
+      return True
+
+
+
+  def fill_histograms(self, analysis_event) :
+    ups = analysis_event.num_upstream_tracks()
+    downs = analysis_event.num_downstream_tracks()
+
+    self.__histogram.Fill(ups, downs)
+
+
+  def _get_plots(self, plot_dict) :
+    plot_dict["scifi_track_numbers"] = self.__histogram
+
+
+  def _get_data(self, data_dict) :
+    pass
+
+
+  def configure_arguments(self, parser) :
+    parser.add_argument( "--scifi_transmission", action="store_true", help="Only analyse events that have precisely 1 track in each tracker" )
+
+
+  def parse_arguments(self, namespace) :
+    self.__do_cut = namespace.scifi_transmission
+
+
+
 
 
