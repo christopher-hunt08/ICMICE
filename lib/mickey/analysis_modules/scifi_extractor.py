@@ -24,12 +24,12 @@ class SciFiExtractor(Analysis_Base) :
     hit = self.__extract_function(self.__extract_plane, analysis_event)
     hit.set_weight(weight)
 
-    string = str(self.__counter) + " 1 " + "-2" + " 0 " + str(hit.get_time()) + " 0.0 " + \
+    string = str(self.__counter) + " 1 " + "2" + " 0 " + str(hit.get_time()) + " 0.0 " + \
              str(1.0e-3*hit.get_x()) + " " + str(1.0e-3*hit.get_y()) + " " + str(1.0e-3*hit.get_z()) + " " + \
              str(1.0e-3*hit.get_px()) + " " + str(1.0e-3*hit.get_py()) + " " + str(1.0e-3*hit.get_pz()) + " 0 0 0\n"
 ## 0  : Event Number
 #value_1 = 1 # Particle Number
-#value_2 = -2 # Particle ID
+#value_2 = 2 # Particle ID
 #value_3 = 0 # Status
 ## 4  : Time
 #value_5 = 0.0
