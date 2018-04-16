@@ -1,3 +1,4 @@
+#!/bin/env python
 
 import MAUS
 import ROOT
