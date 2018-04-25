@@ -13,7 +13,7 @@ CURRENT_MC_LOOKUP = None
 
 
 ####################################################################################################
-def build_event(event_loader, mc_lookup=None) :
+def build_event(event_loader, mc_lookup=None, selection_plane=-1, reference_plane=1) :
   scifi_event = event_loader("scifi")
   tof_event = event_loader("tof")
   global_event = event_loader("global")
@@ -21,7 +21,7 @@ def build_event(event_loader, mc_lookup=None) :
   global CURRENT_MC_LOOKUP
   CURRENT_MC_LOOKUP = mc_lookup
 
-  analysis_event = AnalysisEvent()
+  analysis_event = AnalysisEvent(selection_plane=selection_plane, reference_plane=reference_plane)
 
   tof_spacepoints = tof_event.GetTOFEventSpacePoint()
 
@@ -118,7 +118,7 @@ def _fill_virt(mc_event, data_event) :
 ####################################################################################################
 class AnalysisEvent(object) :
 
-  def __init__(self, selection_plane=(0, 1, 0), reference_plane=(1, 0)) :
+  def __init__(self, selection_plane=-1, reference_plane=1) :
     self.__tof0_spacepoints = []
     self.__tof1_spacepoints = []
     self.__tof2_spacepoints = []
@@ -130,20 +130,20 @@ class AnalysisEvent(object) :
 
     self.__mc_trackpoints = {}
 
-    self.__selection_plane = tools.calculate_plane_id( *selection_plane )
+    self.__selection_plane = selection_plane
     if self.__selection_plane > 0 :
       self.__selection_tracker = self.__tracker1_tracks
     else:
       self.__selection_tracker = self.__tracker0_tracks
     self.__selection_plane = abs(self.__selection_plane)
 
-    self.__upstream_ref = tools.calculate_plane_id( 1, *reference_plane )
-    self.__downstream_ref = tools.calculate_plane_id( 1, *reference_plane )
+    self.__upstream_ref = -1*reference_plane # Upstream planes are negative
+    self.__downstream_ref = reference_plane
 
     if CURRENT_MC_LOOKUP is not None :
-      self.__mc_selection_plane = CURRENT_MC_LOOKUP[tools.calculate_plane_id( *selection_plane )]
-      self.__upstream_mc_ref = CURRENT_MC_LOOKUP[tools.calculate_plane_id( 0, *reference_plane )]
-      self.__downstream_mc_ref = CURRENT_MC_LOOKUP[tools.calculate_plane_id( 1, *reference_plane )]
+      self.__mc_selection_plane = CURRENT_MC_LOOKUP[selection_plane]
+      self.__upstream_mc_ref = CURRENT_MC_LOOKUP[ -1*reference_plane ] # Upstream planes are negative
+      self.__downstream_mc_ref = CURRENT_MC_LOOKUP[ reference_plane ]
     else :
       self.__mc_selection_plane = 0
       self.__upstream_mc_ref = 0

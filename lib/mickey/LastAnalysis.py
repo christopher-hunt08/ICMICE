@@ -1,0 +1,4 @@
+
+LastData = None
+LastPlots = None
+

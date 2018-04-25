@@ -80,7 +80,6 @@ class DiffuserAperture(Cut_Base) :
   def parse_arguments(self, namespace) :
     self.__z_position = namespace.diffuser_position
     self.__radius_cut = namespace.diffuser_radius_cut
-    print "DIFFUSER = ", namespace.diffuser_radius_cut
 
     if self.__radius_cut is None :
       self.__do_cut = False

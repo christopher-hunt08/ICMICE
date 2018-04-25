@@ -52,7 +52,7 @@ class EmittanceAnalysis(Analysis_Base) :
   def parse_arguments(self, namespace) :
     start = namespace.emittance_momentum_bins[0]
     end = namespace.emittance_momentum_bins[1]
-    number = namespace.emittance_momentum_bins[2]
+    number = int(namespace.emittance_momentum_bins[2])
 
     width = (end-start) / number
 

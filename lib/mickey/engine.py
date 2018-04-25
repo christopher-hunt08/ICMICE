@@ -1,5 +1,12 @@
 
 
+### Some global variables to keep track of things between modules
+### Need to define these before importing stuff
+#_last_json = None
+#_last_root = None
+_QUIET = False
+
+
 import ROOT
 import os
 import json
@@ -11,11 +18,8 @@ import analysis.tools as tools
 
 import _parsing
 import event
-
-## Some global variables to keep track of things between modules
-_last_json = None
-_last_root = None
-_QUIET = False
+from beam_selection import BeamSelection
+import LastAnalysis
 
 
 ## Define the engine object
@@ -35,8 +39,14 @@ class Engine(object) :
     self.__use_mc = False
     self.__mc_lookup = None
     self.__conclude_function = None
+    self.__selection_plane = None
+    self.__beam_selection = False
+    self.__reference_plane = 1
+    self.__requires_parent = False
 
     self.__cuts = []
+#    self.__selectors = []
+    self.__selector = None
     self.__analyses = []
 
     self.__max_num_events = 0
@@ -48,8 +58,8 @@ class Engine(object) :
     self.__output_filename = None
     self.__print_plots = False
 
-    self.__last_json = None
-    self.__last_root = None
+#    self.__last_json = None
+#    self.__last_root = None
 
 
 ####################################################################################################
@@ -68,6 +78,18 @@ class Engine(object) :
     if cut.require_mc() :
       self.__use_mc = True
     self.__cuts.append(cut)
+
+
+####################################################################################################
+#  def add_selection(self, selection) :
+#    if selection.requires_parent() :
+#      self.__requires_parent = True
+#    selection.configure_arguments(self.__parser)
+#    self.__selectors.append(selection)
+
+  def beam_selection(self) :
+    self.__selector = BeamSelection()
+    self.__selector.configure_arguments(self.__parser)
 
 
 ####################################################################################################
@@ -126,12 +148,12 @@ class Engine(object) :
 ####################################################################################################
   def analyse_event(self) :
     self.__event_counter += 1
-#    set_event_statistical_weight(self.__file_reader.get_current_statistical_weight())
+    self.__event_weight = self.__file_reader.get_current_statistical_weight()
 
     if self.__use_mc :
-      maus_event = event.build_event(self.__file_reader.get_event, self.__mc_lookup)
+      maus_event = event.build_event(self.__file_reader.get_event, self.__mc_lookup, selection_plane=self.__selection_plane, reference_plane=self.__reference_plane)
     else :
-      maus_event = event.build_event(self.__file_reader.get_event)
+      maus_event = event.build_event(self.__file_reader.get_event, selection_plane=self.__selection_plane, reference_plane=self.__reference_plane)
 
     if self.__do_cuts :
       failed_cuts = 0
@@ -151,7 +173,17 @@ class Engine(object) :
       else :
         for cut in self.__cuts :
           cut.fill_histograms(maus_event)
-      
+
+    if self.__beam_selection :
+      keep, weight = self.__selector.weigh_event(maus_event)
+      self.__event_weight = weight
+
+      if not keep :
+        return
+
+#      for selector in self.__selectors :
+#        self.__event_weight *= selector.weigh_event(maus_event)
+
 
     if self.__save_good_events :
       self.__file_reader.save_event()
@@ -162,7 +194,7 @@ class Engine(object) :
 
     if self.__do_analysis :
       for analysis in self.__analyses :
-        analysis.analyse_event(maus_event)
+        analysis.analyse_event(maus_event, self.__event_weight)
 
 
 
@@ -221,18 +253,25 @@ class Engine(object) :
       plot_dict = {}
 
     cut_dict = {}
+    select_dict = {}
     analysis_dict = {}
 
     if self.__do_cuts :
       for proc in self.__cuts :
         name, plots = proc.get_plots()
         cut_dict[name] = plots
+    if self.__beam_selection :
+#      for selector in self.__selectors :
+#          name, plots = selector.get_plots()
+#          select_dict[name] = plots
+      select_dict = self.__selector.get_plots()
     if self.__do_analysis :
       for ana in self.__analyses :
         name, plots = ana.get_plots()
         analysis_dict[name] = plots
 
     plot_dict["cuts"] = cut_dict
+    plot_dict["beam_selection"] = select_dict
     plot_dict["analysis"] = analysis_dict
 
     return plot_dict
@@ -267,6 +306,7 @@ class Engine(object) :
       data_dict = {}
 
     cut_dict = {}
+    select_dict = {}
     analysis_dict = {}
 
     data_dict['events_processed'] = self.__event_counter
@@ -277,12 +317,18 @@ class Engine(object) :
       for proc in self.__cuts :
         name, data = proc.get_data()
         cut_dict[name] = data
+    if self.__beam_selection :
+#      for selector in self.__selectors :
+#          name, data = selector.get_data()
+#          select_dict[name] = data
+      select_dict = self.__selector.get_data()
     if self.__do_analysis :
       for ana in self.__analyses :
         name, data = ana.get_data()
         analysis_dict[name] = data
 
     data_dict["cuts"] = cut_dict
+    data_dict["beam_selection"] = select_dict
     data_dict["analysis"] = analysis_dict
 
     return data_dict
@@ -313,15 +359,15 @@ class Engine(object) :
        Analyse the argparse arguments
     """
     self.__namespace = self.__parser.parse_args()
-    global _last_json
-    global _last_root
+#    global _last_json
+#    global _last_root
     global _QUIET
 
 
-#    if self.__namespace.last_analysis is not None :
-#      with open(self.__namespace.last_analysis+'.json', 'r') as infile :
-#        _last_json = json.load(infile)
-#      _last_root = ROOT.TFile(self.__namespace.last_analysis+'.root', 'READ')
+    if self.__namespace.last_analysis is not None :
+      with open(self.__namespace.last_analysis+'.json', 'r') as infile :
+        LastAnalysis.LastData = json.load(infile)
+      LastAnalysis.LastPlots = ROOT.TFile(self.__namespace.last_analysis+'.root', 'READ')
 
 
     if self.__namespace.no_cuts :
@@ -335,6 +381,16 @@ class Engine(object) :
     else :
       for analysis in self.__analyses :
         analysis.parse_arguments(self.__namespace)
+
+    if self.__namespace.beam_selection is not None :
+      self.__selection_plane = self.__namespace.beam_selection
+      self.__beam_selection = True
+#      for selector in self.__selectors :
+#        selector.parse_arguments(self.__namespace)
+      self.__selector.parse_arguments(self.__namespace)
+      self.__requires_parent = self.__selector.requires_parent()
+    else :
+      self.__selection_plane = -1
 
     if self.__namespace.virtual_plane_lookup is not None :
       with open(self.__namespace.virtual_plane_lookup, "r") as infile :
@@ -352,6 +408,7 @@ class Engine(object) :
           events = json.load(infile)
         load_events.update(events)
 
+    self.__reference_plane = self.__namespace.reference_plane
     self.__save_good_events = self.__namespace.save_good_events
     self.__output_filename = self.__namespace.output_filename
     self.__output_directory = self.__namespace.output_directory
@@ -375,6 +432,12 @@ class Engine(object) :
 
     self.__file_reader.set_max_num_events(self.__namespace.max_num_events)
     self.__file_reader.select_events(load_events)
+
+#    if self.__requires_parent and ((LastAnalysis.LastData is None) or (LastAnalysis.LastPlots is None)) :
+#      raise ValueError( "Beam selection routine that requires a parent distribution is selected, without a parent analysis being provided.")
+
+#    print self.__requires_parent, LastAnalysis.LastData, LastAnalysis.LastPlots
+
     return self.__namespace
 
 
