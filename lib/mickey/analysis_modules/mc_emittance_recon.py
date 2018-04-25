@@ -64,7 +64,7 @@ class MCEmittanceAnalysis(Analysis_Base) :
 
     self.__momentum_windows = []
 
-    for i in range( number ) :
+    for i in range( int(number) ) :
       self.__momentum_windows.append(( i, (start+i*width), (start+(i+1)*width) ))
       self.__inspectors.append(inspectors.PhaseSpace2DInspector(i, 2000))
 
