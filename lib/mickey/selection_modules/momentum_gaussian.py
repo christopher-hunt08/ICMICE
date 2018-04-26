@@ -1,7 +1,5 @@
 
 from _selection_base import Selection_Base
-#from _selection_base import parent_plots
-#from _selection_base import parent_data
 
 from .. import LastAnalysis
 

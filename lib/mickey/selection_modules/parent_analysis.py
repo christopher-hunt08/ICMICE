@@ -1,10 +1,9 @@
 
-from _selection_base import Selection_Base
-#from _selection_base import parent_plots
-#from _selection_base import parent_data
-from analysis import covariances
 
 from .. import LastAnalysis
+
+from _selection_base import Selection_Base
+from analysis import covariances
 
 import ROOT
 import math
@@ -12,11 +11,9 @@ import array
 import numpy
 
 
-class ParentAnalysis(Selection_Base) :
+class ParentAnalysis(object) :
 
   def __init__(self) :
-    Selection_Base.__init__(self, "parent_analysis", requires_parent=False)
-
     self.__covariance = covariances.CovarianceMatrix()
 
     self.__position_plot = ROOT.TH2F('inspected_position_parent', 'Beam Position', 100, -400.0, 400.0, 100, -400.0, 400.0)
@@ -45,32 +42,31 @@ class ParentAnalysis(Selection_Base) :
       self.__parent_emittance = covariances.emittance_from_matrix(self.__parent_covariance)
 
 
-  def weigh_event(self, event) :
+  def fill_plots(self, event, event_weight) :
     hit = event.selection_trackpoint()
     self.__covariance.add_hit(hit)
 
-    self.__position_plot.Fill(hit.get_x(), hit.get_y())
-    self.__momentum_plot.Fill(hit.get_px(), hit.get_py())
-    self.__x_phasespace_plot.Fill(hit.get_x(), hit.get_px())
-    self.__y_phasespace_plot.Fill(hit.get_y(), hit.get_py())
-    self.__xy_phasespace_plot.Fill(hit.get_x(), hit.get_py())
-    self.__yx_phasespace_plot.Fill(hit.get_y(), hit.get_px())
-    self.__rpt_phasespace_plot.Fill(hit.get_r(), hit.get_pt())
-    self.__phi_phasespace_plot.Fill(hit.get_phi())
-    self.__theta_phasespace_plot.Fill(hit.get_theta())
-    self.__pz_plot.Fill(hit.get_pz())
-    self.__p_plot.Fill(hit.get_p())
+    self.__position_plot.Fill(hit.get_x(), hit.get_y(), event_weight)
+    self.__momentum_plot.Fill(hit.get_px(), hit.get_py(), event_weight)
+    self.__x_phasespace_plot.Fill(hit.get_x(), hit.get_px(), event_weight)
+    self.__y_phasespace_plot.Fill(hit.get_y(), hit.get_py(), event_weight)
+    self.__xy_phasespace_plot.Fill(hit.get_x(), hit.get_py(), event_weight)
+    self.__yx_phasespace_plot.Fill(hit.get_y(), hit.get_px(), event_weight)
+    self.__rpt_phasespace_plot.Fill(hit.get_r(), hit.get_pt(), event_weight)
+    self.__phi_phasespace_plot.Fill(hit.get_phi(), event_weight)
+    self.__theta_phasespace_plot.Fill(hit.get_theta(), event_weight)
+    self.__pz_plot.Fill(hit.get_pz(), event_weight)
+    self.__p_plot.Fill(hit.get_p(), event_weight)
 
     if self.__parent_covariance is not None :
       vector = numpy.array(hit.get_as_vector()[2:6]) # Just the x, px, y, py components
       amplitude = self.__parent_emittance*vector.transpose().dot(self.__parent_covariance_inv.dot(vector))
-      self.__amplitude_plot.Fill(amplitude)
-      self.__amplitude_momentum_plot.Fill(amplitude, hit.get_p())
-
-    return 1.0
+      self.__amplitude_plot.Fill(amplitude, event_weight)
+      self.__amplitude_momentum_plot.Fill(amplitude, hit.get_p(), event_weight)
 
 
-  def _get_plots(self, plot_dict) :
+  def get_plots(self) :
+    plot_dict = {}
     plot_dict['x_y'] = self.__position_plot
     plot_dict['px_py'] = self.__momentum_plot
     plot_dict['x_px'] = self.__x_phasespace_plot
@@ -85,8 +81,11 @@ class ParentAnalysis(Selection_Base) :
     plot_dict['amplitude'] = self.__amplitude_plot
     plot_dict['amplitude_momentum'] = self.__amplitude_momentum_plot
 
+    return plot_dict
 
-  def _get_data(self, data_dict) :
+
+  def get_data(self) :
+    data_dict = {}
     data_dict['x_mean'] = self.__position_plot.GetMean(1)
     data_dict['y_mean'] = self.__position_plot.GetMean(2)
     data_dict['px_mean'] = self.__momentum_plot.GetMean(1)
@@ -126,4 +125,6 @@ class ParentAnalysis(Selection_Base) :
       data_dict['alpha_y'] = 0.0
       data_dict['momentum'] = 0.0
       data_dict['number_particles'] = 0
+
+    return data_dict
 

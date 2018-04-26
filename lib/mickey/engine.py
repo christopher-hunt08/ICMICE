@@ -1,12 +1,5 @@
 
 
-### Some global variables to keep track of things between modules
-### Need to define these before importing stuff
-#_last_json = None
-#_last_root = None
-_QUIET = False
-
-
 import ROOT
 import os
 import json
@@ -20,6 +13,10 @@ import _parsing
 import event
 from beam_selection import BeamSelection
 import LastAnalysis
+
+
+## Some global variables to keep track of things between modules
+_QUIET = False
 
 
 ## Define the engine object
@@ -175,18 +172,14 @@ class Engine(object) :
           cut.fill_histograms(maus_event)
 
     if self.__beam_selection :
-      keep, weight = self.__selector.weigh_event(maus_event)
+      keep, weight = self.__selector.weigh_event(maus_event, self.__event_weight)
       self.__event_weight = weight
 
-      if not keep :
+      if (not keep) or (self.__event_weight < 1.0e-15) :
         return
 
-#      for selector in self.__selectors :
-#        self.__event_weight *= selector.weigh_event(maus_event)
-
-
     if self.__save_good_events :
-      self.__file_reader.save_event()
+      self.__file_reader.save_event(self.__event_weight)
 
     self.__analysed_event_counter += 1
 
@@ -362,12 +355,17 @@ class Engine(object) :
 #    global _last_json
 #    global _last_root
     global _QUIET
+    load_events = None
 
 
     if self.__namespace.last_analysis is not None :
       with open(self.__namespace.last_analysis+'.json', 'r') as infile :
         LastAnalysis.LastData = json.load(infile)
       LastAnalysis.LastPlots = ROOT.TFile(self.__namespace.last_analysis+'.root', 'READ')
+      if self.__namespace.selection_file is None and os.path.exists(self.__namespace.last_analysis+'-good_events.json') :
+        self.__select_events = True
+        with open(self.__namespace.last_analysis+'-good_events.json', 'r') as infile :
+          load_events = json.load(infile)
 
 
     if self.__namespace.no_cuts :
@@ -399,7 +397,6 @@ class Engine(object) :
       for key, item in temp_dict.iteritems() :
         self.__mc_lookup[int(key)] = int(item)
 
-    load_events = None
     if self.__namespace.selection_file is not None :
       self.__select_events = True
       load_events = {}

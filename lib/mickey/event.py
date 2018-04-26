@@ -45,7 +45,7 @@ def build_event(event_loader, mc_lookup=None, selection_plane=-1, reference_plan
     if track.GetAlgorithmUsed() != tools.HELICAL_ALGORITHM_ID :
       continue
 
-    trackpoints = [None for _ in range(16)]
+    trackpoints = {}
 
     for tp in track.scifitrackpoints() :
       plane = tools.calculate_plane_id(1, tp.station(), tp.plane())
@@ -137,7 +137,7 @@ class AnalysisEvent(object) :
       self.__selection_tracker = self.__tracker0_tracks
     self.__selection_plane = abs(self.__selection_plane)
 
-    self.__upstream_ref = -1*reference_plane # Upstream planes are negative
+    self.__upstream_ref = reference_plane
     self.__downstream_ref = reference_plane
 
     if CURRENT_MC_LOOKUP is not None :
