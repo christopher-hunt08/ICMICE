@@ -1,4 +1,6 @@
 
+from .. import LastAnalysis
+
 from _analysis_base import Analysis_Base
 from analysis import inspectors
 from analysis import tools

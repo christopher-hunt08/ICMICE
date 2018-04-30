@@ -1,4 +1,6 @@
 
+from .. import LastAnalysis
+
 from _analysis_base import Analysis_Base
 from analysis import inspectors
 
@@ -61,6 +63,11 @@ class EmittanceAnalysis(Analysis_Base) :
     for i in range( int(number) ) :
       self.__momentum_windows.append(( i, (start+i*width), (start+(i+1)*width) ))
       self.__inspectors.append(inspectors.PhaseSpace2DInspector(i, 2000))
+
+    if LastAnalysis.LastData is not None :
+      if LastAnalysis.LastData['arguments']['emittance_momentum_bins'] == namespace.emittance_momentum_bins :
+        for i in range( int(number) ) :
+          self.__inspectors[i].set_parent_covariance(LastAnalysis.LastData['analysis']['upstream_emittance_reconstruction']['bin_'+str(i)]['covariance_matrix'])
 
 
   def conclude(self) :
