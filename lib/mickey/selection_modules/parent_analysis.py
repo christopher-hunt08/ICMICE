@@ -14,26 +14,28 @@ import numpy
 class ParentAnalysis(object) :
 
   def __init__(self) :
+    self.__oosrt = 1.0/math.sqrt(2.0) #One Over Square Root Two
+
     self.__covariance = covariances.CovarianceMatrix()
 
-    self.__position_plot = ROOT.TH2F('inspected_position_parent', 'Beam Position', 100, -400.0, 400.0, 100, -400.0, 400.0)
-    self.__momentum_plot = ROOT.TH2F('inspected_momentum_parent', 'Beam Momentum', 100, -400.0, 400.0, 100, -400.0, 400.0)
-    self.__x_phasespace_plot = ROOT.TH2F('inspected_x_phasespace_parent', 'X-Phasespace', 100, -400.0, 400.0, 100, -400.0, 400.0)
-    self.__y_phasespace_plot = ROOT.TH2F('inspected_y_phasespace_parent', 'Y-Phasespace', 100, -400.0, 400.0, 100, -400.0, 400.0)
-    self.__xy_phasespace_plot = ROOT.TH2F('inspected_xpy_phasespace_parent', 'X-Py-Phasespace', 100, -400.0, 400.0, 100, -400.0, 400.0)
-    self.__yx_phasespace_plot = ROOT.TH2F('inspected_ypx_phasespace_parent', 'Y-Px-Phasespace', 100, -400.0, 400.0, 100, -400.0, 400.0)
-    self.__rpt_phasespace_plot = ROOT.TH2F('inspected_rpt_phasespace_parent', 'r-Pt-Phasespace', 100, 0.0, 400.0, 100, 0.0, 400.0)
-    self.__phi_phasespace_plot = ROOT.TH1F('inspected_phi_phasespace_parent', '#phi-Phasespace', 100, -4.0, 4.0 )
-    self.__theta_phasespace_plot = ROOT.TH1F('inspected_theta_phasespace_parent', '#theta-Phasespace', 100, -4.0, 4.0 )
-    self.__pz_plot = ROOT.TH1F('inspected_pz_parent', 'p_{z}', 400, 0.0, 400.0 )
-    self.__p_plot = ROOT.TH1F('inspected_p_parent', 'p', 400, 0.0, 400.0 )
+    self.__position_plot = ROOT.TH2F('position_parent', 'Beam Position', 100, -400.0, 400.0, 100, -400.0, 400.0)
+    self.__momentum_plot = ROOT.TH2F('momentum_parent', 'Beam Momentum', 100, -400.0, 400.0, 100, -400.0, 400.0)
+    self.__x_phasespace_plot = ROOT.TH2F('x_phasespace_parent', 'X-Phasespace', 100, -400.0, 400.0, 100, -400.0, 400.0)
+    self.__y_phasespace_plot = ROOT.TH2F('y_phasespace_parent', 'Y-Phasespace', 100, -400.0, 400.0, 100, -400.0, 400.0)
+    self.__xy_phasespace_plot = ROOT.TH2F('xpy_phasespace_parent', 'X-Py-Phasespace', 100, -400.0, 400.0, 100, -400.0, 400.0)
+    self.__yx_phasespace_plot = ROOT.TH2F('ypx_phasespace_parent', 'Y-Px-Phasespace', 100, -400.0, 400.0, 100, -400.0, 400.0)
+    self.__rpt_phasespace_plot = ROOT.TH2F('rpt_phasespace_parent', 'r-Pt-Phasespace', 100, 0.0, 400.0, 100, 0.0, 400.0)
+    self.__phi_phasespace_plot = ROOT.TH1F('phi_phasespace_parent', '#phi-Phasespace', 100, -4.0, 4.0 )
+    self.__theta_phasespace_plot = ROOT.TH1F('theta_phasespace_parent', '#theta-Phasespace', 100, -4.0, 4.0 )
+    self.__pz_plot = ROOT.TH1F('pz_parent', 'p_{z}', 400, 0.0, 400.0 )
+    self.__p_plot = ROOT.TH1F('p_parent', 'p', 400, 0.0, 400.0 )
 
     self.__parent_covariance = None
     self.__parent_covariance_inv = None
     self.__parent_emittance = 0.0
 
     self.__amplitude_plot = ROOT.TH1F('single_particle_amplitudes_parent', 'Amplitude', 500, 0.0, 100.0)
-    self.__amplitude_momentum_plot = ROOT.TH2F('inspected_A_p_phasespace_parent', 'A-p-Phasespace', 200, 0.0, 100.0, 260, 130.0, 260.0 )
+    self.__amplitude_momentum_plot = ROOT.TH2F('A_p_phasespace_parent', 'A-p-Phasespace', 200, 0.0, 100.0, 260, 130.0, 260.0 )
 
 
     if LastAnalysis.LastData is not None :
@@ -44,6 +46,7 @@ class ParentAnalysis(object) :
 
   def fill_plots(self, event, event_weight) :
     hit = event.selection_trackpoint()
+    hit.set_weight(event_weight)
     self.__covariance.add_hit(hit)
 
     self.__position_plot.Fill(hit.get_x(), hit.get_y(), event_weight)

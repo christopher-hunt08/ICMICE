@@ -18,7 +18,7 @@ class SelectAmplitude(Selection_Base) :
 
     self.__parent = LastAnalysis.LastPlots.Get('beam_selection/parent_analysis/amplitude')
     covariance = numpy.array(LastAnalysis.LastData['beam_selection']['parent_analysis']['covariance_matrix'])
-    self.__sampler = beam_sampling.Amplitude4DSampler(self.__parent, covariance, emittance, max_x=16*emittance)
+    self.__sampler = beam_sampling.Amplitude4DSampler(self.__parent, covariance, emittance, max_x=20*emittance)
 
 
   def weigh_event(self, event) :

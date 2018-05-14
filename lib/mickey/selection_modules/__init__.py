@@ -2,4 +2,6 @@
 from parent_analysis import ParentAnalysis
 from momentum_gaussian import SelectMomentum
 from amplitude_selection import SelectAmplitude
+from uncorrelated4d_phasespace import SelectUncorrelated4D
+from amplitude_cut import CutAmplitude
 

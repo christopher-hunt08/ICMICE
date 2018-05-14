@@ -86,9 +86,21 @@ class BeamSelection(object) :
 
           elif values[0] == "amplitude" :
             if len(values) != 2 :
-              raise ValueError("Amplitude selection requires precisely 1 arguments")
+              raise ValueError("Amplitude selection requires precisely 1 argument")
             if not has_parent : raise RuntimeError(values[0])
             self.__selectors.append(selection_modules.SelectAmplitude(float(values[1])))
+
+          elif values[0] == "amplitude_cut" :
+            if len(values) != 2 :
+              raise ValueError("Amplitude cut requires precisely 1 argument")
+            if not has_parent : raise RuntimeError(values[0])
+            self.__selectors.append(selection_modules.CutAmplitude(float(values[1])))
+
+          elif values[0] == "uncorrelated4d" :
+            if len(values) != 3 :
+              raise ValueError("Amplitude selection requires precisely 2 arguments")
+            if not has_parent : raise RuntimeError(values[0])
+            self.__selectors.append(selection_modules.SelectUncorrelated4D(float(values[1]), float(values[2])))
 
           else :
             raise ValueError("Unknown beam selection routine requested, '"+values[0]+"'.")
