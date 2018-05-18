@@ -4,4 +4,5 @@ from mc_emittance_recon import MCEmittanceAnalysis
 from emittance_systematic_error import EmittanceSystematicErrors
 from optics_recon import OpticsAnalysis
 from scifi_extractor import SciFiExtractor
+from track_finding_efficiency import TrackFindingEfficiency
 
