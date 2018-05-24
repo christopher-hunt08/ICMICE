@@ -15,10 +15,12 @@ class TrackFindingEfficiency(Analysis_Base) :
     self.__upstream_expected = 0
     self.__upstream_expected_spacepoints = 0
     self.__upstream_found = 0
+    self.__upstream_found_spacepoints = 0
     self.__upstream_superfluous = 0
     self.__downstream_expected = 0
     self.__downstream_expected_spacepoints = 0
     self.__downstream_found = 0
+    self.__downstream_found_spacepoints = 0
     self.__downstream_superfluous = 0
 
     self.__upstream_hard_efficiency = 0.0
@@ -36,8 +38,17 @@ class TrackFindingEfficiency(Analysis_Base) :
       if analysis_event.num_downstream_tracks() == 1 :
         self.__upstream_expected += 1
 
-  #      if analsysis_event.num_upstream_spacepoints() >= 4 :
-  #        self.__upstream_expected_spacepoints += 1
+#        if analysis_event.num_upstream_spacepoints() >= 4 :
+#          self.__upstream_expected_spacepoints += 1
+        perfect = True
+        for i in range(1, 5) :
+          if len(analysis_event.upstream_spacepoints()[i]) != 1 :
+            perfect = False
+            break
+        if perfect :
+          self.__upstream_expected_spacepoints += 1
+          if analysis_event.num_upstream_tracks() == 1 :
+            self.__upstream_found_spacepoints += 1
 
         if analysis_event.num_upstream_tracks() == 1 :
           self.__upstream_found += 1
@@ -49,8 +60,17 @@ class TrackFindingEfficiency(Analysis_Base) :
       if analysis_event.num_upstream_tracks() == 1 :
         self.__downstream_expected += 1
 
-  #      if analsysis_event.num_downstream_spacepoints() >= 4 :
-  #        self.__downstream_expected_spacepoints += 1
+#        if analysis_event.num_downstream_spacepoints() >= 4 :
+#          self.__downstream_expected_spacepoints += 1
+        perfect = True
+        for i in range(1, 5) :
+          if len(analysis_event.downstream_spacepoints()[i]) != 1 :
+            perfect = False
+            break
+        if perfect :
+          self.__downstream_expected_spacepoints += 1
+          if analysis_event.num_downstream_tracks() == 1 :
+            self.__downstream_found_spacepoints += 1
 
         if analysis_event.num_downstream_tracks() == 1 :
           self.__downstream_found += 1
@@ -97,21 +117,19 @@ class TrackFindingEfficiency(Analysis_Base) :
 
 
   def conclude(self) :
-#    self.__upstream_hard_efficiency = self.__upstream_found / self.__upstream_expected_spacepoints
-    self.__upstream_hard_efficiency = 0.0
+    self.__upstream_hard_efficiency = float(self.__upstream_found_spacepoints) / float(self.__upstream_expected_spacepoints)
     self.__upstream_soft_efficiency = float(self.__upstream_found) / float(self.__upstream_expected)
     k = self.__upstream_soft_efficiency
     N = float(self.__upstream_expected_spacepoints)
-    self.__upstream_hard_error = 0.0
+    self.__upstream_hard_error = (1.0/N)*math.sqrt(k*(1.0-k/N))
     N = float(self.__upstream_expected)
     self.__upstream_soft_error = (1.0/N)*math.sqrt(k*(1.0-k/N))
 
-#    self.__downstream_hard_efficiency = self.__downstream_found / self.__downstream_expected_spacepoints
-    self.__downstream_hard_efficiency = 0.0
+    self.__downstream_hard_efficiency = float(self.__downstream_found_spacepoints) / float(self.__downstream_expected_spacepoints)
     self.__downstream_soft_efficiency = float(self.__downstream_found) / float(self.__downstream_expected)
     k = self.__downstream_soft_efficiency
     N = float(self.__downstream_expected_spacepoints)
-    self.__downstream_hard_error = 0.0
+    self.__downstream_hard_error = (1.0/N)*math.sqrt(k*(1.0-k/N))
     N = float(self.__downstream_expected)
     self.__downstream_soft_error = (1.0/N)*math.sqrt(k*(1.0-k/N))
 

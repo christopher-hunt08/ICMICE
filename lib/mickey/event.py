@@ -63,6 +63,26 @@ def build_event(event_loader, mc_lookup=None, selection_plane=-1, reference_plan
       raise "WTF!?"
 
 
+  up_spacepoints = {1:[], 2:[], 3:[], 4:[], 5:[]}
+  down_spacepoints = {1:[], 2:[], 3:[], 4:[], 5:[]}
+  up_sp_count = 0
+  down_sp_count = 0
+  for sp in scifi_event.spacepoints() :
+    tracker = sp.get_tracker()
+    station = sp.get_station()
+    if tracker == 0 :
+      up_spacepoints[station].append( (hit_types.AnalysisSpacePoint(scifi=sp), sp.get_used()) )
+      up_sp_count += 1
+    elif tracker == 1 :
+      down_spacepoints[station].append( (hit_types.AnalysisSpacePoint(scifi=sp), sp.get_used()) )
+      down_sp_count += 1
+
+  analysis_event._AnalysisEvent__tracker0_spacepoints = up_spacepoints
+  analysis_event._AnalysisEvent__tracker0_num_spacepoints = up_sp_count
+  analysis_event._AnalysisEvent__tracker1_spacepoints = down_spacepoints
+  analysis_event._AnalysisEvent__tracker1_num_spacepoints = down_sp_count
+
+
   global_chains = global_event.get_primary_chains()
   for chain in global_chains :
     chain_type = chain.get_chain_type()
@@ -125,6 +145,11 @@ class AnalysisEvent(object) :
 
     self.__tracker0_tracks = []
     self.__tracker1_tracks = []
+
+    self.__tracker0_spacepoints = []
+    self.__tracker1_spacepoints = []
+    self.__tracker0_num_spacepoints = 0
+    self.__tracker1_num_spacepoints = 0
 
     self.__global_tracks = []
 
@@ -208,6 +233,22 @@ class AnalysisEvent(object) :
 
   def downstream_reference_trackpoint(self, track_index=0) :
     return self.__tracker1_tracks[track_index][self.__downstream_ref]
+
+
+  def num_upstream_spacepoints(self) :
+    return self.__tracker0_num_spacepoints
+
+
+  def num_downstream_spacepoints(self) :
+    return self.__tracker1_num_spacepoints
+
+
+  def upstream_spacepoints(self) :
+    return self.__tracker0_spacepoints
+
+
+  def downstream_spacepoints(self) :
+    return self.__tracker1_spacepoints
 
 
 

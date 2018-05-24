@@ -25,8 +25,10 @@ if __name__ == "__main__" :
     engine = mickey.Engine('track_finding_efficiency')
 
     engine.add_cut( cuts_modules.TOF01Time() )
+    engine.add_cut( cuts_modules.TOF12Time() )
 
     engine.add_analysis( analysis_modules.TrackFindingEfficiency() )
+#    engine.add_analysis( analysis_modules.TOFAnalysis() )
 
     namespace = engine.process_arguments()
 
