@@ -15,6 +15,8 @@ class ParentAnalysis(object) :
 
   def __init__(self) :
     self.__oosrt = 1.0/math.sqrt(2.0) #One Over Square Root Two
+    self.__field = 3.0e-3 # Kilotesla?
+    self.__charge = 1.0
 
     self.__covariance = covariances.CovarianceMatrix()
 
@@ -29,12 +31,14 @@ class ParentAnalysis(object) :
     self.__theta_phasespace_plot = ROOT.TH1F('theta_phasespace_parent', '#theta-Phasespace', 100, -4.0, 4.0 )
     self.__pz_plot = ROOT.TH1F('pz_parent', 'p_{z}', 400, 0.0, 400.0 )
     self.__p_plot = ROOT.TH1F('p_parent', 'p', 400, 0.0, 400.0 )
+    self.__L_plot = ROOT.TH1F('angular_momentum_parent', 'L', 2000, -1000.0, 1000.0)
+    self.__L_canon_plot = ROOT.TH1F('canonical_angular_momentum_parent', 'L_{canon}', 2000, -1000.0, 1000.0)
 
     self.__parent_covariance = None
     self.__parent_covariance_inv = None
     self.__parent_emittance = 0.0
 
-    self.__amplitude_plot = ROOT.TH1F('single_particle_amplitudes_parent', 'Amplitude', 500, 0.0, 100.0)
+    self.__amplitude_plot = ROOT.TH1F('single_particle_amplitudes_parent', 'Amplitude', 1000, 0.0, 200.0)
     self.__amplitude_momentum_plot = ROOT.TH2F('A_p_phasespace_parent', 'A-p-Phasespace', 200, 0.0, 100.0, 260, 130.0, 260.0 )
 
 
@@ -60,6 +64,8 @@ class ParentAnalysis(object) :
     self.__theta_phasespace_plot.Fill(hit.get_theta(), event_weight)
     self.__pz_plot.Fill(hit.get_pz(), event_weight)
     self.__p_plot.Fill(hit.get_p(), event_weight)
+    self.__L_plot.Fill((hit.get_x()*hit.get_py() - hit.get_y()*hit.get_px())/hit.get_pz(), event_weight)
+    self.__L_canon_plot.Fill((hit.get_x()*hit.get_py() - hit.get_y()*hit.get_px() + 0.5*self.__charge*self.__field*hit.get_x()**2*hit.get_y()**2)/hit.get_pz(), event_weight)
 
     if self.__parent_covariance is not None :
       vector = numpy.array(hit.get_as_vector()[2:6]) # Just the x, px, y, py components
@@ -81,6 +87,8 @@ class ParentAnalysis(object) :
     plot_dict['theta'] = self.__theta_phasespace_plot
     plot_dict['pz'] = self.__pz_plot
     plot_dict['p'] = self.__p_plot
+    plot_dict['L'] = self.__L_plot
+    plot_dict['L_canon'] = self.__L_canon_plot
     plot_dict['amplitude'] = self.__amplitude_plot
     plot_dict['amplitude_momentum'] = self.__amplitude_momentum_plot
 

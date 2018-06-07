@@ -31,6 +31,7 @@ class SelectAmplitude(Selection_Base) :
   def _get_plots(self, plot_dict) :
     pass
 
+
   def _get_data(self, data_dict) :
     pass
 

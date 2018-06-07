@@ -14,6 +14,7 @@ def get_engine_parser(parser, job_name="some_analysis") :
 
   parser.add_argument( '-f', '--find_files', action="store_true", help='Assume the maus_root_files variables are directories and go looking inside for the individual root files' )
 
+  parser.add_argument( '-L', '--max_load_events', type=int, help='Maximum number of events to load.' )
   parser.add_argument( '-N', '--max_num_events', type=int, help='Maximum number of events to analyse.' )
 
   parser.add_argument( '-O', '--output_filename', default=job_name, help='Set the output filename' )

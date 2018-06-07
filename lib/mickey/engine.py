@@ -29,6 +29,7 @@ class Engine(object) :
     self.__parser = argparse.ArgumentParser(description=description, conflict_handler='resolve')
     _parsing.get_engine_parser(self.__parser, job_name)
     self.__file_reader = None
+    self.__max_analysis_events = 0
     self.__select_events = False
     self.__save_good_events = False
     self.__do_cuts = True
@@ -126,6 +127,10 @@ class Engine(object) :
       print
       print "Keyboard Interrupt"
       print
+    except StopIteration :
+      print
+      print "Analysed Required Events"
+      print
 
     print "{0:d} Events Were Processed                                            ".format(self.__file_reader.get_total_num_events())
     print
@@ -175,7 +180,7 @@ class Engine(object) :
       keep, weight = self.__selector.weigh_event(maus_event, self.__event_weight)
       self.__event_weight = weight
 
-      if (not keep) or (self.__event_weight < 1.0e-15) :
+      if not keep :
         return
 
     if self.__save_good_events :
@@ -188,6 +193,9 @@ class Engine(object) :
     if self.__do_analysis :
       for analysis in self.__analyses :
         analysis.analyse_event(maus_event, self.__event_weight)
+
+    if self.__analysed_event_counter == self.__max_analysis_events :
+      raise StopIteration
 
 
 
@@ -427,8 +435,9 @@ class Engine(object) :
     else :
       self.__file_reader = event_loader.maus_reader(self.__maus_root_files, print_progress='spill')
 
-    self.__file_reader.set_max_num_events(self.__namespace.max_num_events)
+    self.__file_reader.set_max_num_events(self.__namespace.max_load_events)
     self.__file_reader.select_events(load_events)
+    self.__max_analysis_events = self.__namespace.max_num_events
 
 #    if self.__requires_parent and ((LastAnalysis.LastData is None) or (LastAnalysis.LastPlots is None)) :
 #      raise ValueError( "Beam selection routine that requires a parent distribution is selected, without a parent analysis being provided.")

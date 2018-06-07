@@ -102,6 +102,18 @@ class BeamSelection(object) :
             if not has_parent : raise RuntimeError(values[0])
             self.__selectors.append(selection_modules.SelectUncorrelated4D(float(values[1]), float(values[2])))
 
+          elif values[0] == "voronoi" :
+            if len(values) != 1 :
+              raise ValueError("Voronoi phasespace selection requires precisely 1 argument")
+            if not has_parent : raise RuntimeError(values[0])
+            self.__selectors.append(selection_modules.VoronoiPhaseSpaceSelection())
+
+          elif values[0] == "analytic_beam" :
+            if len(values) != 5 :
+              raise ValueError("Analytic 4D phasespace selection requires precisely 4 argument")
+            if not has_parent : raise RuntimeError(values[0])
+            self.__selectors.append(selection_modules.SelectAnalyticBeam(float(values[1]), float(values[2]), float(values[3]), float(values[4])))
+
           else :
             raise ValueError("Unknown beam selection routine requested, '"+values[0]+"'.")
       except RuntimeError as ex :
