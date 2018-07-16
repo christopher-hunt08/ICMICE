@@ -18,6 +18,8 @@ class ParentAnalysis(object) :
     self.__field = 3.0e-3 # Kilotesla?
     self.__charge = 1.0
 
+    self.__weights_plot = ROOT.TH1F('weights_parent', 'Weights', 1000, 0.0, 100.0 )
+
     self.__covariance = covariances.CovarianceMatrix()
 
     self.__position_plot = ROOT.TH2F('position_parent', 'Beam Position', 100, -400.0, 400.0, 100, -400.0, 400.0)
@@ -41,7 +43,6 @@ class ParentAnalysis(object) :
     self.__amplitude_plot = ROOT.TH1F('single_particle_amplitudes_parent', 'Amplitude', 1000, 0.0, 200.0)
     self.__amplitude_momentum_plot = ROOT.TH2F('A_p_phasespace_parent', 'A-p-Phasespace', 200, 0.0, 100.0, 260, 130.0, 260.0 )
 
-
     if LastAnalysis.LastData is not None :
       self.__parent_covariance = numpy.array(LastAnalysis.LastData['beam_selection']['parent_analysis']['covariance_matrix'])
       self.__parent_covariance_inv = numpy.linalg.inv(self.__parent_covariance)
@@ -52,6 +53,8 @@ class ParentAnalysis(object) :
     hit = event.selection_trackpoint()
     hit.set_weight(event_weight)
     self.__covariance.add_hit(hit)
+
+    self.__weights_plot.Fill(event_weight)
 
     self.__position_plot.Fill(hit.get_x(), hit.get_y(), event_weight)
     self.__momentum_plot.Fill(hit.get_px(), hit.get_py(), event_weight)
@@ -76,6 +79,7 @@ class ParentAnalysis(object) :
 
   def get_plots(self) :
     plot_dict = {}
+    plot_dict['weights'] = self.__weights_plot
     plot_dict['x_y'] = self.__position_plot
     plot_dict['px_py'] = self.__momentum_plot
     plot_dict['x_px'] = self.__x_phasespace_plot

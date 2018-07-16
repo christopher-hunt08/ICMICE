@@ -15,6 +15,7 @@ class BeamSelection(object) :
     self.__requires_parent = False
     self.__select_events = False
     self.__parent_analysis = None
+    self.__selection_normalisation = 1.0
 
 
   def requires_parent(self) :
@@ -46,17 +47,25 @@ class BeamSelection(object) :
 
 
   def weigh_event(self, analysis_event, event_weight=1.0) :
+    keep = True
+
     for selector in self.__selectors :
       event_weight *= selector.weigh_event(analysis_event)
 
-    self.__parent_analysis.fill_plots(analysis_event, event_weight)
-
     if self.__select_events :
+      event_weight *= self.__selection_normalisation
+
       u = numpy.random.sample() # Random Numbers [0:1)
       if u >= event_weight :
-        return False, event_weight
+        keep = False
+        event_weight = 0.0
+      else :
+        keep = True
+        event_weight = 1.0
 
-    return True, event_weight
+    self.__parent_analysis.fill_plots(analysis_event, event_weight)
+
+    return keep, event_weight
 
 
   def configure_arguments(self, parser) :
@@ -109,10 +118,10 @@ class BeamSelection(object) :
             self.__selectors.append(selection_modules.VoronoiPhaseSpaceSelection())
 
           elif values[0] == "analytic_beam" :
-            if len(values) != 5 :
+            if len(values) != 6 :
               raise ValueError("Analytic 4D phasespace selection requires precisely 4 argument")
             if not has_parent : raise RuntimeError(values[0])
-            self.__selectors.append(selection_modules.SelectAnalyticBeam(float(values[1]), float(values[2]), float(values[3]), float(values[4])))
+            self.__selectors.append(selection_modules.SelectAnalyticBeam(float(values[1]), float(values[2]), float(values[3]), float(values[4]), float(values[5])))
 
           else :
             raise ValueError("Unknown beam selection routine requested, '"+values[0]+"'.")
@@ -120,5 +129,9 @@ class BeamSelection(object) :
         raise RuntimeError("Selection routine, '"+ex.args[0]+"', requires the parent analysis to be provided.")
  
     self.__parent_analysis = selection_modules.ParentAnalysis()
+
+    self.__selection_normalisation = 1.0
+    for selector in self.__selectors :
+      self.__selection_normalisation *= selector.get_normalisation()
 
 

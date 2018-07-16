@@ -20,6 +20,7 @@ class SelectMomentum(Selection_Base) :
 
     self.__parent = LastAnalysis.LastPlots.Get('beam_selection/parent_analysis/p')
     self.__sampler = beam_sampling.GaussianMomentumSampler(self.__parent, mean_p, rms_p)
+    self.__normalisation = self.__sampler.get_selection_normalisation() / self.__sampler.get_weight_normalisation()
 
 
   def weigh_event(self, event) :
@@ -28,6 +29,9 @@ class SelectMomentum(Selection_Base) :
     self.__p_plot.Fill(hit.get_p(), weight)
 
     return weight
+
+  def get_normalisation(self) :
+    return self.__normalisation
 
 
   def _get_plots(self, plot_dict) :

@@ -28,8 +28,13 @@ class VoronoiPhaseSpaceSelection(Selection_Base) :
 #    self.__vertices = voronoi_data['vertices']
 #    self.__regions = voronoi_data['regions']
 #    self.__point_regions = voronoi_data['point_regions']
+    self.__normalisation = voronoi_data['normalisation']
     
     self.__event_counter = 0
+
+
+  def get_normalisation(self) :
+    return self.__normalisation
 
 
   def weigh_event(self, event) :

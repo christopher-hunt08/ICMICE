@@ -45,10 +45,11 @@ class VoronoiTessellation(Analysis_Base) :
 
   def _get_data(self, data_dict) :
     data_dict['voronoi_data'] = self.__output_filename
+    data_dict['required_covariance_matrix'] = [ [ self.__covariance[i][j] for i in range(4) ] for j in range(4) ]
 
 
   def configure_arguments(self, parser) :
-    parser.add_argument('--voronoi_selection', type=float, nargs=4, help='Specify the Emittance, Alpha, Beta and Momentum of the selection')
+    parser.add_argument('--voronoi_selection', type=float, nargs=5, help='Specify the Emittance, Alpha, Beta, L and Momentum of the selection')
 #    parser.add_argument('--ensemble_size', default=self.__ensemble_size, type=int, help="Number of events to load for each ensemble.")
 
 
@@ -60,18 +61,19 @@ class VoronoiTessellation(Analysis_Base) :
   def conclude(self) :
     V = scipy.spatial.Voronoi(self.__the_data)
 
-    emittance, alpha, beta, momentum = self.__selection
+    emittance, alpha, beta, L, momentum = self.__selection
     mass = analysis.tools.MUON_MASS
 
     cov_xx = beta*emittance*mass/momentum
     cov_xp = -1.0*alpha*emittance*mass
     cov_pp = ((1.0 + alpha**2) / beta) * emittance * momentum * mass
+    cov_px = -1.0*emittance*mass*L
 
     means = numpy.array( [ 0.0, 0.0, 0.0, 0.0 ] )
-    covariance = numpy.array( [[ cov_xx, cov_xp, 0.0, 0.0 ], \
-                               [ cov_xp, cov_pp, 0.0, 0.0 ], \
-                               [ 0.0, 0.0, cov_xx, cov_xp ], \
-                               [ 0.0, 0.0, cov_xp, cov_pp ]] )
+    self.__covariance = numpy.array( [[ cov_xx, cov_xp, 0.0, cov_px ], \
+                                     [ cov_xp, cov_pp, -cov_px, 0.0 ], \
+                                     [ 0.0, -cov_px, cov_xx, cov_xp ], \
+                                     [ cov_px, 0.0, cov_xp, cov_pp ]] )
 
     self.__densities = []
     self.__weights = []
@@ -80,10 +82,12 @@ class VoronoiTessellation(Analysis_Base) :
     self.__point_regions = V.point_region
     self.__vertices = V.vertices
 
+    normalisation = 1.0/multivariate_gaussian(means, means, self.__covariance)
+
     for num, point in enumerate(self.__the_data) :
       region = self.__regions[self.__point_regions[num]]
       vector = numpy.array(point)
-      expected = multivariate_gaussian(vector, means, covariance)
+      expected = normalisation*multivariate_gaussian(vector, means, self.__covariance)
       density = 0.0
       weight = 0.0
 
@@ -104,14 +108,15 @@ class VoronoiTessellation(Analysis_Base) :
       self.__densities.append( density )
       self.__weights.append( weight )
 
-
+    print len(self.__weights)
     max_weight = max(self.__weights)
     sum_weight = sum(self.__weights)
 #    norm = len(self.__weights)/sum_weight
     norm = len(self.__weights)/sum_weight
     self.__weights = [ weight*norm for weight in self.__weights ]
+    mean_weight = numpy.mean(self.__weights)
 
-    print len(self.__weights), sum_weight, max_weight, norm, numpy.mean(self.__weights)
+    print len(self.__weights), sum_weight, max_weight, norm, mean_weight
 
     for density, weight in zip(self.__densities, self.__weights) :
       self.__densities_histogram.Fill( density )
@@ -120,7 +125,7 @@ class VoronoiTessellation(Analysis_Base) :
 
     data_dict = { "regions" : self.__regions, "point_regions": self.__point_regions.tolist(), \
                   "vertices" : self.__vertices.tolist(), "densities" : self.__densities, \
-                  "weights" : self.__weights }
+                  "weights" : self.__weights, "normalisation" : mean_weight/max_weight }
 
     with open( self.__output_filename, 'w' ) as outfile :
       json.dump(data_dict, outfile)

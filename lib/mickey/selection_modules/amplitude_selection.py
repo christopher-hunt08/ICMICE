@@ -19,6 +19,7 @@ class SelectAmplitude(Selection_Base) :
     self.__parent = LastAnalysis.LastPlots.Get('beam_selection/parent_analysis/amplitude')
     covariance = numpy.array(LastAnalysis.LastData['beam_selection']['parent_analysis']['covariance_matrix'])
     self.__sampler = beam_sampling.Amplitude4DSampler(self.__parent, covariance, emittance, max_x=20*emittance)
+    self.__normalisation =  self.__sampler.get_selection_normalisation() / self.__sampler.get_weight_normalisation()
 
 
   def weigh_event(self, event) :
@@ -26,6 +27,10 @@ class SelectAmplitude(Selection_Base) :
     weight = self.__sampler.weight(hit)
 
     return weight
+
+
+  def get_normalisation(self) :
+    return self.__normalisation
 
 
   def _get_plots(self, plot_dict) :
