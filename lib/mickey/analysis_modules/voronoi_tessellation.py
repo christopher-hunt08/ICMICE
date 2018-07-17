@@ -66,7 +66,7 @@ class VoronoiTessellation(Analysis_Base) :
 
     cov_xx = beta*emittance*mass/momentum
     cov_xp = -1.0*alpha*emittance*mass
-    cov_pp = ((1.0 + alpha**2) / beta) * emittance * momentum * mass
+    cov_pp = ((1.0 + alpha**2 + L**2) / beta) * emittance * momentum * mass
     cov_px = -1.0*emittance*mass*L
 
     means = numpy.array( [ 0.0, 0.0, 0.0, 0.0 ] )
