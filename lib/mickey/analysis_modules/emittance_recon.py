@@ -15,6 +15,7 @@ class EmittanceAnalysis(Analysis_Base) :
     Analysis_Base.__init__(self, "upstream_emittance_reconstruction")
 
     self.__inspectors = []
+    self.__total_inspector = None
     self.__momentum_windows = [ (0, 0.0, 300.0) ]
     self.__emittance_graph = None
 
@@ -25,6 +26,8 @@ class EmittanceAnalysis(Analysis_Base) :
 
     p = hit.get_p()
 
+    self.__total_inspector.add_hit(hit)
+
     for num, low, high in self.__momentum_windows :
       if p >= low and p < high :
         self.__inspectors[num].add_hit(hit)
@@ -34,6 +37,8 @@ class EmittanceAnalysis(Analysis_Base) :
     for num, low, high in self.__momentum_windows :
       name = "bin_{0:d}".format(num)
       plot_dict[name] = self.__inspectors[num].get_plot_dictionary()
+
+    plot_dict['all'] = self.__total_inspector.get_plot_dictionary()
 
     plot_dict["emittance"] = self.__emittance_graph
 
@@ -64,10 +69,14 @@ class EmittanceAnalysis(Analysis_Base) :
       self.__momentum_windows.append(( i, (start+i*width), (start+(i+1)*width) ))
       self.__inspectors.append(inspectors.PhaseSpace2DInspector(i, 2000))
 
+    self.__total_inspector = inspectors.PhaseSpace2DInspector(-1, 2000)
+
     if LastAnalysis.LastData is not None :
       if LastAnalysis.LastData['arguments']['emittance_momentum_bins'] == namespace.emittance_momentum_bins :
         for i in range( int(number) ) :
           self.__inspectors[i].set_parent_covariance(LastAnalysis.LastData['analysis']['upstream_emittance_reconstruction']['bin_'+str(i)]['covariance_matrix'])
+
+      self.__total_inspector.set_parent_covariance(LastAnalysis.LastData['analysis']['upstream_emittance_reconstruction']['all']['covariance_matrix'])
 
 
   def conclude(self) :

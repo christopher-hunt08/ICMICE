@@ -20,12 +20,15 @@ class VoronoiTessellation(Analysis_Base) :
 
     self.__output_filename = ""
 
-#    self.__ensemble_size = 10000
+    self.__ensemble_size = 10000
     self.__the_data = []
     self.__densities = []
     self.__regions = None
     self.__point_regions = None
     self.__vertices = None
+
+    self.__voronoi_iteration = 0
+    self.__current_ensemble = 0
 
     self.__weights_histogram = ROOT.TH1F("vornoi_weights", ";w;#", 1000, 0.0, 100.0)
     self.__densities_histogram = ROOT.TH1F("vornoi_densities", ";#rho;#", 1000, 0.0, 1.0)
@@ -36,6 +39,19 @@ class VoronoiTessellation(Analysis_Base) :
 
     vector = numpy.array( [hit.get_x(), hit.get_px(), hit.get_y(), hit.get_py()] )
     self.__the_data.append( vector )
+    self.__current_ensemble += 1
+
+    if self.__current_ensemble >= self.__ensemble_size :
+      self.save_voronoi_file()
+
+      self.__the_data = []
+      self.__densities = []
+      self.__regions = None
+      self.__point_regions = None
+      self.__vertices = None
+
+      self.__voronoi_iteration += 1
+      self.__current_ensemble = 0
 
 
   def _get_plots(self, plot_dict) :
@@ -50,15 +66,16 @@ class VoronoiTessellation(Analysis_Base) :
 
   def configure_arguments(self, parser) :
     parser.add_argument('--voronoi_selection', type=float, nargs=5, help='Specify the Emittance, Alpha, Beta, L and Momentum of the selection')
-#    parser.add_argument('--ensemble_size', default=self.__ensemble_size, type=int, help="Number of events to load for each ensemble.")
+    parser.add_argument('--ensemble_size', default=self.__ensemble_size, type=int, help="Number of events to load for each ensemble.")
 
 
   def parse_arguments(self, namespace) :
-    self.__output_filename = os.path.join(namespace.output_directory, "Voronoi_Analysis.json")
+    self.__output_filename = os.path.join(namespace.output_directory, namespace.output_filename+"-VoronoiData.json")
     self.__selection = namespace.voronoi_selection
+    self.__ensemble_size = namespace.ensemble_size
 
 
-  def conclude(self) :
+  def save_voronoi_file(self) :
     V = scipy.spatial.Voronoi(self.__the_data)
 
     emittance, alpha, beta, L, momentum = self.__selection
@@ -127,8 +144,22 @@ class VoronoiTessellation(Analysis_Base) :
                   "vertices" : self.__vertices.tolist(), "densities" : self.__densities, \
                   "weights" : self.__weights, "normalisation" : mean_weight/max_weight }
 
-    with open( self.__output_filename, 'w' ) as outfile :
+    with open( self.__output_filename+".{0:05d}".format(self.__voronoi_iteration), 'w' ) as outfile :
       json.dump(data_dict, outfile)
+
+
+  def conclude(self) :
+    if self.__current_ensemble >= (0.5*self.__ensemble_size) : # If we haven't got half the ensemble, throw it.
+      self.save_voronoi_file()
+
+      self.__the_data = []
+      self.__densities = []
+      self.__regions = None
+      self.__point_regions = None
+      self.__vertices = None
+
+      self.__voronoi_iteration += 1
+      self.__current_ensemble = 0
 
 
 
