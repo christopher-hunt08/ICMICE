@@ -31,7 +31,7 @@ MICE_DATA_DIR = ""
 
 
 RUN_KEYS = ['run', 'momentum', 'analysis_code', 'tof1_triggers', 'tof2_triggers']
-ANALYSIS_KEYS = ['momentum', 'channel', 'beamline', 'diffuser', 'absorber']
+ANALYSIS_KEYS = ['momentum', 'cooling_channel', 'beamline', 'diffuser', 'absorber']
 
 
 def load_config(namespace, data) :
