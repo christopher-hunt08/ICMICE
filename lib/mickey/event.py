@@ -104,22 +104,23 @@ def build_event(event_loader, mc_lookup=None, selection_plane=-1, reference_plan
   if CURRENT_MC_LOOKUP is not None :
 #    _fill_mc(event_loader("mc"), analysis_event, mc_lookup)
     _fill_virt(event_loader("mc"), analysis_event)
+    analysis_event._AnalysisEvent__mc_primary = hit_types.AnalysisHit(primary_particle=event_loader('mc').GetPrimary())
 
   return analysis_event
 
 
-####################################################################################################
-def _fill_mc(mc_event, data_event, mc_lookup) :
-  virtual_hits_count = mc_event.GetVirtualHitsSize()
-
-  for virt_i in range(virtual_hits_count) :
-    virt = mc_event.GetAVirtualHit(virt_i)
-    station = virt.GetStationId()
-
-    if station in mc_lookup :
-      plane_id = mc_lookup[station]
-      hit = hit_types.AnalysisHit(virtual_track_point=virt)
-      data_event._AnalysisEvent__mc_trackpoints[plane_id] = hit
+#####################################################################################################
+#def _fill_mc(mc_event, data_event, mc_lookup) :
+#  virtual_hits_count = mc_event.GetVirtualHitsSize()
+#
+#  for virt_i in range(virtual_hits_count) :
+#    virt = mc_event.GetAVirtualHit(virt_i)
+#    station = virt.GetStationId()
+#
+#    if station in mc_lookup :
+#      plane_id = mc_lookup[station]
+#      hit = hit_types.AnalysisHit(virtual_track_point=virt)
+#      data_event._AnalysisEvent__mc_trackpoints[plane_id] = hit
 
 
 ####################################################################################################
@@ -154,6 +155,7 @@ class AnalysisEvent(object) :
     self.__global_tracks = []
 
     self.__mc_trackpoints = {}
+    self.__mc_primary = None
 
     self.__selection_plane = selection_plane
     if self.__selection_plane > 0 :
@@ -267,7 +269,14 @@ class AnalysisEvent(object) :
 
 
   def mc_virtual_hit(self, plane_id) :
-    return self.__mc_trackpoints[plane_id]
+    if plane_id in self.__mc_trackpoints :
+      return self.__mc_trackpoints[plane_id]
+    else :
+      return None
+
+
+  def mc_primary(self) :
+    return self.__mc_primary
 
 
   def mc_selection_trackpoint(self) :

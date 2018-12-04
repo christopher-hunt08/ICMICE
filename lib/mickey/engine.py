@@ -198,7 +198,6 @@ class Engine(object) :
       raise StopIteration
 
 
-
 ####################################################################################################
   def set_output_filename(self, filename) :
     self.__output_filename = filename

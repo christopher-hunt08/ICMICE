@@ -22,11 +22,9 @@ if __name__ == "__main__" :
 
   try :
 
-    engine = mickey.Engine('generate_voronoi')
+    engine = mickey.Engine('mc_inspection')
 
-    engine.beam_selection()
-
-    engine.add_analysis( analysis_modules.VoronoiTessellation() )
+    engine.add_analysis( analysis_modules.MCInspections() )
 
     namespace = engine.process_arguments()
 
@@ -38,5 +36,4 @@ if __name__ == "__main__" :
   print 
   print "Complete."
   print
-
 

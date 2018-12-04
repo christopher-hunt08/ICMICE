@@ -10,7 +10,7 @@ import array
 class MCTruthOpticsRecon(Analysis_Base) :
 
   def __init__(self) :
-    Analysis_Base.__init__(self, "mc_trueth_optics_reconstruction")
+    Analysis_Base.__init__(self, "mc_truth_optics_reconstruction")
 
     self.__inspectors = []
 
