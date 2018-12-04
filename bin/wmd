@@ -199,7 +199,7 @@ def run_search(namespace, data) :
 
     for key in ANALYSIS_KEYS :
       if key in details :
-        print namespace.search_term, details[key]
+#        print namespace.search_term, details[key]
         if str(details[key]).find(namespace.search_term) > -1 :
           analysis_codes.append( analysis )
           break
@@ -282,16 +282,16 @@ def run_add_runs(namespace, data) :
   if momentum is None :
     momentum = data['analyses'][analysis]['momentum']
 
-  for run in run_numbers :
-    try :
-      test = int(run)
-      if len(run) != 5 :
-        print "Not a valid run number: "+run
-        print "Should be like: 00000"
-        return
-    except :
-      print "Not a valid run number: "+run
-      return
+#  for run in run_numbers :
+#    try :
+#      test = int(run)
+#      if len(run) != 5 :
+#        print "Not a valid run number: "+run
+#        print "Should be like: 00000"
+#        return
+#    except :
+#      print "Not a valid run number: "+run
+#      return
 
   existing_runs = []
   for run in run_numbers :
