@@ -31,7 +31,7 @@ MICE_DATA_DIR = ""
 
 
 RUN_KEYS = ['run', 'momentum', 'analysis_code', 'tof1_triggers', 'tof2_triggers']
-ANALYSIS_KEYS = ['momentum', 'channel', 'beamline', 'diffuser', 'absorber']
+ANALYSIS_KEYS = ['momentum', 'cooling_channel', 'beamline', 'diffuser', 'absorber']
 
 
 def load_config(namespace, data) :
@@ -55,6 +55,19 @@ def build_file_name(run_number) :
     write( "Could Not Find Data File : "+run )
 
   return None
+
+
+def format_run_number(run_number) :
+  try :
+    test = int(run_number)
+    if len(run_number) == 5 :
+      return run_number
+    if len(run_number) == 4 :
+      return '0'+run_number
+  except :
+    pass
+
+  raise argparse.ArgumentTypeError("Not a valid run number: "+run_number)
 
 
 def format_analysis(code, datum) :
@@ -186,6 +199,7 @@ def run_search(namespace, data) :
 
     for key in ANALYSIS_KEYS :
       if key in details :
+        print namespace.search_term, details[key]
         if str(details[key]).find(namespace.search_term) > -1 :
           analysis_codes.append( analysis )
           break
@@ -286,10 +300,15 @@ def run_add_runs(namespace, data) :
         existing_runs.append(datum)
   if len(existing_runs) > 0 :
     print len(existing_runs), "run(s) already exist in database."
-    if not namespace.force :
-      print "Database not updated. (Run with --force)"
+    if (not namespace.force) and (not namespace.update) :
+      print "Database not updated. (Run with --force or --update)"
       return 
-    else :
+    elif namespace.update :
+      new_run_numbers = []
+      for ex_run in existing_runs :
+        run_numbers.remove(ex_run['run'])
+      print "Only new runs will be added."
+    elif namespace.force :
       print "Runs will be overwritten."
 
   for run in existing_runs :
@@ -298,7 +317,6 @@ def run_add_runs(namespace, data) :
     new_run = { 'run' : run, 'analysis_code' : analysis, 'momentum' : momentum }
     data['runs'].append(new_run)
 
-  print momentum, analysis, run_numbers
   update_database(data)
 
 
@@ -547,7 +565,7 @@ if __name__ == "__main__" :
   find_parser.add_argument('--beamline', default=None, help="Beamline settings to search for.")
   find_parser.add_argument('--diffuser', default=None, help="Diffuser settings to search for.")
   find_parser.add_argument('--momentum', default=None, help="Beam Momentum to search for.")
-  find_parser.add_argument('--run_numbers', default=None, nargs='+', help="Run Numbers to search for.")
+  find_parser.add_argument('--run_numbers', type=format_run_number, default=None, nargs='+', help="Run Numbers to search for.")
   find_parser.set_defaults(func=run_find)
 
   search_parser = subparsers.add_parser( 'search', help="Returns analysis codes that meet the search criteria." )
@@ -555,7 +573,7 @@ if __name__ == "__main__" :
   search_parser.set_defaults(func=run_search)
 
   details_parser = subparsers.add_parser( 'detail', help="Returns details for a particular Run or Analysis Code." )
-  details_parser.add_argument('run_number', help="Run number (default) or analysis code to describe")
+  details_parser.add_argument('run_number', type=format_run_number, help="Run number (default) or analysis code to describe")
   details_parser.add_argument('-A', action='store_true', help="Analysis Code to describe. Run number is assumed by default" )
   details_parser.add_argument('--analysis', action='store_true', help="Return the analysis code." )
   details_parser.add_argument('--momentum', action='store_true', help="Return the nominal beam momentum." )
@@ -581,7 +599,8 @@ if __name__ == "__main__" :
   add_runs_parser.add_argument('--analysis', default=None, help="Analysis Code to which the runs are added.")
   add_runs_parser.add_argument('--momentum', default=None, help="Nominal momentum for the run.")
   add_runs_parser.add_argument('-f', '--force', action='store_true', help="Overwrite existing runs.")
-  add_runs_parser.add_argument('run_numbers', nargs='+', help="List of run numbers.")
+  add_runs_parser.add_argument('-u', '--update', action='store_true', help="Add runs that don't exist.")
+  add_runs_parser.add_argument('run_numbers', type=format_run_number, nargs='+', help="List of run numbers.")
   add_runs_parser.set_defaults(func=run_add_runs)
 
   remove_parser = subparsers.add_parser( 'remove', help="Removes entries from the database" )
