@@ -93,6 +93,12 @@ class BeamSelection(object) :
             if not has_parent : raise RuntimeError(values[0])
             self.__selectors.append(selection_modules.SelectMomentum(float(values[1]), float(values[2])))
 
+          if values[0] == "longitudinal_momentum" :
+            if len(values) != 3 :
+              raise ValueError("Longitudinal momentum selection requires precisely 2 arguments")
+            if not has_parent : raise RuntimeError(values[0])
+            self.__selectors.append(selection_modules.SelectLongMomentum(float(values[1]), float(values[2])))
+
           elif values[0] == "amplitude" :
             if len(values) != 2 :
               raise ValueError("Amplitude selection requires precisely 1 argument")
@@ -116,6 +122,12 @@ class BeamSelection(object) :
               raise ValueError("Voronoi phasespace selection requires precisely 1 argument")
             if not has_parent : raise RuntimeError(values[0])
             self.__selectors.append(selection_modules.VoronoiPhaseSpaceSelection())
+
+          elif values[0] == "kde" :
+            if len(values) != 1 :
+              raise ValueError("KDE selection requires precisely 1 argument")
+            if not has_parent : raise RuntimeError(values[0])
+            self.__selectors.append(selection_modules.KDESelection())
 
           elif values[0] == "analytic_beam" :
             if len(values) != 6 :

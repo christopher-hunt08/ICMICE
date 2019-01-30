@@ -50,6 +50,7 @@ class Engine(object) :
     self.__max_num_events = 0
     self.__event_counter = 0
     self.__event_weight = 0.0
+    self.__selection_counter = 0
     self.__analysed_event_counter = 0
 
     self.__output_directory = None
@@ -177,6 +178,7 @@ class Engine(object) :
           cut.fill_histograms(maus_event)
 
     if self.__beam_selection :
+      self.__selection_counter += 1
       keep, weight = self.__selector.weigh_event(maus_event, self.__event_weight)
       self.__event_weight = weight
 
@@ -310,6 +312,7 @@ class Engine(object) :
     analysis_dict = {}
 
     data_dict['events_processed'] = self.__event_counter
+    data_dict['events_selected_on'] = self.__selection_counter
     data_dict['events_analysed'] = self.__analysed_event_counter
     data_dict['arguments'] = vars(self.__namespace)
 

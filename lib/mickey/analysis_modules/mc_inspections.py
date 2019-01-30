@@ -50,7 +50,7 @@ class MCInspections(Analysis_Base) :
 
 
   def configure_arguments(self, parser) :
-    parser.add_argument( "--inspection_planes", nargs='+', type=int, default=None, help="Specify the virtual planes to inspect." )
+    parser.add_argument( "--inspection_planes", nargs='+', type=int, default=[], help="Specify the virtual planes to inspect." )
     parser.add_argument( "--inspect_primaries", action='store_true', help="Specify whether in inspector the primary particles." )
     parser.add_argument( '--pid', type=int, default=None, help="Specify the Geant4 PID to analyse." )
 

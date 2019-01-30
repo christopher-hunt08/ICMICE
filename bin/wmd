@@ -310,9 +310,9 @@ def run_add_runs(namespace, data) :
       print "Only new runs will be added."
     elif namespace.force :
       print "Runs will be overwritten."
+      for run in existing_runs :
+        data['runs'].remove(run)
 
-  for run in existing_runs :
-    data['runs'].remove(run)
   for run in run_numbers :
     new_run = { 'run' : run, 'analysis_code' : analysis, 'momentum' : momentum }
     data['runs'].append(new_run)

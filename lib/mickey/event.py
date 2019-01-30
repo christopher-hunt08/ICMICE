@@ -46,8 +46,11 @@ def build_event(event_loader, mc_lookup=None, selection_plane=-1, reference_plan
       continue
 
     trackpoints = {}
+    scifitp = track.scifitrackpoints()
+    if len(scifitp) < 15 :
+      continue
 
-    for tp in track.scifitrackpoints() :
+    for tp in scifitp :
       plane = tools.calculate_plane_id(1, tp.station(), tp.plane())
       hit = hit_types.AnalysisHit(scifi_track_point=tp)
 
@@ -273,6 +276,14 @@ class AnalysisEvent(object) :
       return self.__mc_trackpoints[plane_id]
     else :
       return None
+
+
+  def num_virtual_hits(self) :
+    return len(self.__mc_trackpoints)
+
+
+  def virtual_plane_ids(self) :
+    return self.__mc_trackpoints.keys()
 
 
   def mc_primary(self) :
