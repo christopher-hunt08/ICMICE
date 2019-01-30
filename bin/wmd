@@ -143,7 +143,7 @@ def run_find(namespace, data) :
     if namespace.beamline is not None :
       analysis_requirements.append(("beamline", namespace.beamline))
     if namespace.diffuser is not None :
-      analysis_requirements.append(("diffuser", int(namespace.diffuser)))
+      analysis_requirements.append(("diffuser", str(int(namespace.diffuser))))
 
     for analysis, details in data['analyses'].iteritems() :
       for key, value in analysis_requirements :
