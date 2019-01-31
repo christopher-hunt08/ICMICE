@@ -10,4 +10,5 @@ from voronoi_tessellation import VoronoiTessellation
 from kde_calculation import KDECalculation
 from mc_inspections import MCInspections
 from mc_scifi_efficiency import MCSciFiEfficiency
+from cooling_extractor import CoolingExtractor
 
