@@ -70,7 +70,7 @@ class TOF01Time(Cut_Base) :
 
 
   def _get_plots(self, plot_dict) :
-    max_val = self.__histogram.GetMaximum()
+    max_val = self.__histogram.GetMaximum()*1.05
     lower_line = ROOT.TLine(self.__cut_window[0], 0.0, self.__cut_window[0], max_val)
     upper_line = ROOT.TLine(self.__cut_window[1], 0.0, self.__cut_window[1], max_val)
     self.__histogram.GetListOfFunctions().Add(lower_line)

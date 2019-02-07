@@ -30,6 +30,10 @@ class SciFiUpstreamChisqNDF(Cut_Base) :
 
 
   def _get_plots(self, plot_dict) :
+    max_val = self.__histogram.GetMaximum()*1.05
+    upper_line = ROOT.TLine(self.__chisq_ndf_cut, 0.0, self.__chisq_ndf_cut, max_val)
+    self.__histogram.GetListOfFunctions().Add(upper_line)
+
     plot_dict["chisq_ndf"] = self.__histogram
 
 
