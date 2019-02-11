@@ -401,9 +401,50 @@ def run_cut(namespace, data) :
 
 
 def run_remove(namespace, data) :
-  write("REMOVE Functionality not yet implemented.")
-  write("Nothing has happened.")
-  write()
+  if len(namespace.run_numbers) == 0 and len(namespace.analyses) == 0 :
+    print "Nothing to delete."
+    print
+    return
+  else :
+    print "Removing:"
+
+  if len(namespace.analyses) > 0 :
+    for analysis in namespace.analyses :
+      if not analysis in data['analyses'] :
+        print "ERROR: ", analysis, "Not found in database."
+        return
+
+  if len(namespace.run_numbers) > 0 :
+    for run_number in namespace.run_numbers :
+      if not run_number in data['runs'] :
+        print "ERROR: ", run_number, "Not found in database."
+        return
+
+    print "  Analysis Runs: ",
+    for run_number in namespace.run_numbers :
+      print run_number,
+    print
+  if len(namespace.analyses) > 0 :
+    print "  Analysis Runs: ",
+    for analysis in namespace.analyses :
+      print analysis,
+    print
+  print
+
+  result = raw_input("WARNING: Are you sure you would like to delete these entries? y/n? ")
+  if result == 'y' or result == 'Y' :
+    print
+    for run_number in namespace.run_numbers :
+      del_data['runs'][run_number]
+    for analysis in namespace.analyses :
+      del data['analyses'][analysis]
+    update_database(data)
+    print "Complete"
+
+  else :
+    print
+    print "Nothing removed from database."
+    return
 
 
 def run_config(namespace, data) :
