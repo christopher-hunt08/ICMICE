@@ -32,9 +32,9 @@ class ParentAnalysis(object) :
     self.__phi_phasespace_plot = ROOT.TH1F('phi_phasespace_parent', '#phi-Phasespace; #phi  [rad]', 100, -4.0, 4.0 )
     self.__theta_phasespace_plot = ROOT.TH1F('theta_phasespace_parent', '#theta-Phasespace; #theta [rad]', 100, -4.0, 4.0 )
     self.__pz_plot = ROOT.TH1F('pz_parent', 'p_{z}; p_{z}  [MeV/c]', 400, 0.0, 400.0 )
-    self.__p_plot = ROOT.TH1F('p_parent', 'p [MeV/c]', 400, 0.0, 400.0 )
-    self.__L_plot = ROOT.TH1F('angular_momentum_parent', 'L', 2000, -1000.0, 1000.0)
-    self.__L_canon_plot = ROOT.TH1F('canonical_angular_momentum_parent', 'L_{canon}', 2000, -1000.0, 1000.0)
+    self.__p_plot = ROOT.TH1F('p_parent', 'p;p [MeV/c]', 400, 0.0, 400.0 )
+    self.__L_plot = ROOT.TH1F('angular_momentum_parent', ';L', 2000, -1000.0, 1000.0)
+    self.__L_canon_plot = ROOT.TH1F('canonical_angular_momentum_parent', ';L_{canon}', 2000, -1000.0, 1000.0)
 
     self.__parent_covariance = None
     self.__parent_covariance_inv = None

@@ -20,6 +20,15 @@ class TOF01Spacepoints(Cut_Base) :
 
 
   def fill_histograms(self, analysis_event) :
+    tof0_upper = ROOT.TLine(1.5, -0.5, 1.5, 4.5)
+    tof1_upper = ROOT.TLine(-0.5, 1.5, 4.5, 1.5)
+    tof0_lower = ROOT.TLine(0.5, -0.5, 0.5, 4.5)
+    tof1_lower = ROOT.TLine(-0.5, 0.5, 4.5, 0.5)
+    self.__histogram.GetListOfFunctions().Add(tof0_upper)
+    self.__histogram.GetListOfFunctions().Add(tof0_lower)
+    self.__histogram.GetListOfFunctions().Add(tof1_upper)
+    self.__histogram.GetListOfFunctions().Add(tof1_lower)
+
     self.__histogram.Fill( analysis_event.num_tof0_spacepoints(), analysis_event.num_tof1_spacepoints() )
 
 
