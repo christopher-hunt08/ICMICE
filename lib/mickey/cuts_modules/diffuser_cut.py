@@ -66,9 +66,10 @@ class DiffuserAperture(Cut_Base) :
 
 
   def _get_plots(self, plot_dict) :
-    max_val = self.__histogram.GetMaximum()*1.05
-    upper_line = ROOT.TLine(self.__radius_cut, 0.0, self.__radius_cut, max_val)
-    self.__histogram.GetListOfFunctions().Add(upper_line)
+    if self.__radius_cut is not None :
+      max_val = self.__histogram.GetMaximum()*1.05
+      upper_line = ROOT.TLine(self.__radius_cut, 0.0, self.__radius_cut, max_val)
+      self.__histogram.GetListOfFunctions().Add(upper_line)
 
     plot_dict["projected_diffuser_radius"] = self.__histogram
     plot_dict["position_residual"] = self.__residual_histogram
