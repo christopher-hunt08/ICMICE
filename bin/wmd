@@ -71,7 +71,7 @@ def format_run_number(run_number) :
 
 
 def format_analysis(code, datum) :
-  string = str(code) + " : " + str(datum['momentum']) + ", " + str(datum['cooling_channel']) + "  " + str(datum['beamline']) + ", Diff=" + str(datum['diffuser']) + ", Abs=" + datum['absorber']
+  string = str(code) + " : " + str(datum['momentum']) + ", " + str(datum['cooling_channel']) + "  " + str(datum['beamline']) + ", Diff=" + str(datum['diffuser']) + ", Abs="+ str(datum['absorber'])
   return string
 
 
@@ -217,6 +217,7 @@ def run_details(namespace, data) :
   analysis = namespace.run_number
 
   if not namespace.A :
+    analysis = format_run_number(analysis)
     for run in data['runs'] :
       if run['run'] == analysis :
         analysis = run['analysis_code']
@@ -237,6 +238,8 @@ def run_details(namespace, data) :
     print analysis_datum['beamline']
   elif namespace.diffuser :
     print analysis_datum['diffuser']
+  elif namespace.absorber :
+    print analysis_datum['absorber']
   else :
     print format_analysis(analysis, analysis_datum)
 
@@ -404,9 +407,50 @@ def run_cut(namespace, data) :
 
 
 def run_remove(namespace, data) :
-  write("REMOVE Functionality not yet implemented.")
-  write("Nothing has happened.")
-  write()
+  if len(namespace.run_numbers) == 0 and len(namespace.analyses) == 0 :
+    print "Nothing to delete."
+    print
+    return
+  else :
+    print "Removing:"
+
+  if len(namespace.analyses) > 0 :
+    for analysis in namespace.analyses :
+      if not analysis in data['analyses'] :
+        print "ERROR: ", analysis, "Not found in database."
+        return
+
+  if len(namespace.run_numbers) > 0 :
+    for run_number in namespace.run_numbers :
+      if not run_number in data['runs'] :
+        print "ERROR: ", run_number, "Not found in database."
+        return
+
+    print "  Analysis Runs: ",
+    for run_number in namespace.run_numbers :
+      print run_number,
+    print
+  if len(namespace.analyses) > 0 :
+    print "  Analysis Runs: ",
+    for analysis in namespace.analyses :
+      print analysis,
+    print
+  print
+
+  result = raw_input("WARNING: Are you sure you would like to delete these entries? y/n? ")
+  if result == 'y' or result == 'Y' :
+    print
+    for run_number in namespace.run_numbers :
+      del_data['runs'][run_number]
+    for analysis in namespace.analyses :
+      del data['analyses'][analysis]
+    update_database(data)
+    print "Complete"
+
+  else :
+    print
+    print "Nothing removed from database."
+    return
 
 
 def run_config(namespace, data) :
@@ -579,13 +623,14 @@ if __name__ == "__main__" :
   search_parser.set_defaults(func=run_search)
 
   details_parser = subparsers.add_parser( 'detail', help="Returns details for a particular Run or Analysis Code." )
-  details_parser.add_argument('run_number', type=format_run_number, help="Run number (default) or analysis code to describe")
+  details_parser.add_argument('run_number', help="Run number (default) or analysis code to describe")
   details_parser.add_argument('-A', action='store_true', help="Analysis Code to describe. Run number is assumed by default" )
   details_parser.add_argument('--analysis', action='store_true', help="Return the analysis code." )
   details_parser.add_argument('--momentum', action='store_true', help="Return the nominal beam momentum." )
   details_parser.add_argument('--channel', action='store_true', help="Return the Cooling Channel Setting." )
   details_parser.add_argument('--beamline', action='store_true', help="Return the Beamline Setting." )
   details_parser.add_argument('--diffuser', action='store_true', help="Return the diffuser Setting." )
+  details_parser.add_argument('--absorber', action='store_true', help="Return the absorber Setting." )
   details_parser.set_defaults(func=run_details)
 
   add_parser = subparsers.add_parser( 'add', help="Adds entries to the database" )
@@ -610,6 +655,8 @@ if __name__ == "__main__" :
   add_runs_parser.set_defaults(func=run_add_runs)
 
   remove_parser = subparsers.add_parser( 'remove', help="Removes entries from the database" )
+  remove_parser.add_argument('--run_numbers', default=[], type=format_run_number, nargs='+', help='List of run numbers to remove from database')
+  remove_parser.add_argument('--analyses', default=[], nargs='+', help='List of analysis codes to remove from database')
   remove_parser.set_defaults(func=run_remove)
 
   cut_parser = subparsers.add_parser( 'cut', help="Returns the cut parameters for the requested analysis code" )
