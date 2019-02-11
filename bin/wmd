@@ -71,7 +71,7 @@ def format_run_number(run_number) :
 
 
 def format_analysis(code, datum) :
-  string = str(code) + " : " + str(datum['momentum']) + ", " + str(datum['cooling_channel']) + "  " + str(datum['beamline']) + ", Diff=" + str(datum['diffuser'])
+  string = str(code) + " : " + str(datum['momentum']) + ", " + str(datum['cooling_channel']) + "  " + str(datum['beamline']) + ", Diff=" + str(datum['diffuser']) + ", Abs=" + datum['absorber']
   return string
 
 
@@ -376,6 +376,12 @@ def run_add_analysis(namespace, data) :
   datum['beamline'] = beamline
   datum['diffuser'] = diffuser
   datum['absorber'] = absorber
+
+  for test_code, test_data in data['analyses'].iteritems() :
+    if datum == test_data :
+      print "Error. An analysis already exists with that definition.", test_code
+      print "Please delete the original, if you wish to replace it."
+      return
 
   print "Adding Analysis:", format_analysis(code, datum)
 
