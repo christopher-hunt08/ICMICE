@@ -144,6 +144,8 @@ def run_find(namespace, data) :
       analysis_requirements.append(("beamline", namespace.beamline))
     if namespace.diffuser is not None :
       analysis_requirements.append(("diffuser", str(int(namespace.diffuser))))
+    if namespace.absorber is not None :
+      analysis_requirements.append(("absorber", namespace.absorber))
 
     for analysis, details in data['analyses'].iteritems() :
       for key, value in analysis_requirements :
@@ -568,6 +570,7 @@ if __name__ == "__main__" :
   find_parser.add_argument('--beamline', default=None, help="Beamline settings to search for.")
   find_parser.add_argument('--diffuser', default=None, help="Diffuser settings to search for.")
   find_parser.add_argument('--momentum', default=None, help="Beam Momentum to search for.")
+  find_parser.add_argument('--absorber', default=None, help="Absorber setting to search for.")
   find_parser.add_argument('--run_numbers', type=format_run_number, default=None, nargs='+', help="Run Numbers to search for.")
   find_parser.set_defaults(func=run_find)
 
