@@ -60,7 +60,7 @@ class BananaPlot(Cut_Base) :
 
 
   def _get_plots(self, plot_dict) :
-    if self.__momentum_range is not None 
+    if self.__momentum_range is not None :
       #### Banana Lines
       f1 = ROOT.TF1("testfunc", tof_function, 100.0, 300.0, 2)
       f1.SetParameter(0, self.__mass_hypothesis)
