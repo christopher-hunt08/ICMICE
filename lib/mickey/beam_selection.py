@@ -53,7 +53,7 @@ class BeamSelection(object) :
       event_weight *= selector.weigh_event(analysis_event)
 
     if self.__select_events :
-      event_weight *= self.__selection_normalisation
+#      event_weight *= self.__selection_normalisation
 
       u = numpy.random.sample() # Random Numbers [0:1)
       if u >= event_weight :
@@ -63,7 +63,8 @@ class BeamSelection(object) :
         keep = True
         event_weight = 1.0
 
-    self.__parent_analysis.fill_plots(analysis_event, event_weight)
+    if keep :
+      self.__parent_analysis.fill_plots(analysis_event, event_weight)
 
     return keep, event_weight
 

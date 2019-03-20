@@ -13,12 +13,25 @@ import numpy
 import scipy.spatial
 
 
+####################################################################################################
+## Required to adjust the default KDE width
+####################################################################################################
+def silverman_3(kernel) :
+  silverman = (kernel.n * (kernel.d + 2) / 4.)**(-1. / (kernel.d + 4))
+  return silverman / 3.0
+
+####################################################################################################
+
+
+
 class KDECalculation(Analysis_Base) :
 
   def __init__(self) :
     Analysis_Base.__init__(self, "KDE_Calculation")
 
     self.__output_filename = ""
+    self.__norm_samples = 10000
+
     self.__means = None
     self.__covariance = None
 
@@ -64,14 +77,16 @@ class KDECalculation(Analysis_Base) :
   def configure_arguments(self, parser) :
     parser.add_argument('--kde_selection', type=float, nargs=5, help='Specify the Emittance, Alpha, Beta, L and Momentum of the selection')
     parser.add_argument('--ensemble_size', default=self.__ensemble_size, type=int, help="Number of events to load for each ensemble.")
-    parser.add_argument('--maximum_event_weight', type=float, default=self.__max_event_weight, help="Ensure no outlandish event weights are applied. Weights greater than the value specified will be cut.")
+#    parser.add_argument('--maximum_event_weight', type=float, default=self.__max_event_weight, help="Ensure no outlandish event weights are applied. Weights greater than the value specified will be cut.")
+    parser.add_argument('--number_normalisation_samples', type=int, default=self.__norm_samples, help="Number of samples to take in order to estimate the normalalisation coefficient.")
 
 
   def parse_arguments(self, namespace) :
     self.__output_filename = os.path.join(namespace.output_directory, namespace.output_filename+"-KDEData.json")
     self.__selection = namespace.kde_selection
     self.__ensemble_size = namespace.ensemble_size
-    self.__max_event_weight = namespace.maximum_event_weight
+#    self.__max_event_weight = namespace.maximum_event_weight
+    self.__norm_samples = namespace.number_normalisation_samples
 
     emittance, alpha, beta, L, momentum = self.__selection
     mass = analysis.tools.MUON_MASS
@@ -89,37 +104,67 @@ class KDECalculation(Analysis_Base) :
 
 
   def save_kde_file(self) :
-    kernel = scipy.stats.gaussian_kde(numpy.transpose(self.__the_data))
+    kernel = scipy.stats.gaussian_kde(numpy.transpose(self.__the_data), bw_method='scott')
 
     self.__densities = []
     self.__weights = []
 
-    normalisation = 1.0/multivariate_gaussian(self.__means, self.__means, self.__covariance)
+#    normalisation = 1.0/multivariate_gaussian(self.__means, self.__means, self.__covariance)
 #    normalisation = 1.0
+
+    print "Estimating Normalisation"
+    norm = 1.0e20
+    determinant = numpy.linalg.det(self.__covariance)
+    covariance_inv = numpy.linalg.inv(self.__covariance)
+    count = 0
+    while count < self.__norm_samples :
+      x = scipy.random.multivariate_normal(self.__means, self.__covariance)
+      vector = numpy.array(numpy.array(x) - numpy.array(self.__means))
+      amplitude = vector.transpose().dot(covariance_inv.dot(vector))
+      if amplitude > 1.0 : continue
+      count += 1
+
+      test_norm = norm
+      parent = kernel.pdf( x )
+      daughter = multivariate_gaussian(x, self.__means, self.__covariance)
+
+#      number_density = kernel.n * parent
+#      uncertainty = 0.25*math.sqrt(daughter*(1.0-daughter) / number_density)
+      uncertainty = 0.0
+      if daughter > 1.0e-9 :
+        test_norm = (parent+uncertainty) / daughter
+
+      if test_norm < norm :
+        norm = test_norm
+
+    print "Normalisation Constant =", norm
+    normalisation = norm
+    print "Weighing Events"
 
     for num, point in enumerate(self.__the_data) :
       vector = numpy.array(point)
-      expected = normalisation*multivariate_gaussian(vector, self.__means, self.__covariance)
+      expected = float(normalisation*multivariate_gaussian(vector, self.__means, self.__covariance))
       density = 1.0/kernel.pdf(point)[0]
-      weight = expected / density
+#      weight = expected / density
+      weight = float(expected * density)
 
       self.__densities.append( density )
       self.__weights.append( weight )
 
 
-    print len(self.__weights)
-    norm = len(self.__weights)/sum(self.__weights)
+    print "Weighed", len(self.__weights), "Events"
+#    norm = len(self.__weights)/sum(self.__weights)
 
 #    self.__weights = [ weight*norm for weight in self.__weights ]
 
-    new_weights = []
-    for weight in self.__weights :
-      weight = weight*norm
-      if weight > self.__max_event_weight :
-        weight = self.__max_event_weight
-      new_weights.append(weight)
-
-    self.__weights = new_weights
+#    new_weights = []
+#    for weight in self.__weights :
+#      weight = weight*norm
+#      if weight > self.__max_event_weight :
+#        weight = self.__max_event_weight
+#      new_weights.append(weight)
+#
+#    self.__weights = new_weights
 
     max_weight = max(self.__weights)
     max_density = max(self.__densities)

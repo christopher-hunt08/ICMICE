@@ -24,6 +24,8 @@ class KDESelection(Selection_Base) :
     self.__event_counter = 0
     self.__current_file_events = 0
 
+    self.__normalisation = 1.0
+
     self.advance_kde_data_file()
 
 
